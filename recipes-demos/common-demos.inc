@@ -1,0 +1,49 @@
+DESCRIPTION = "Vision SDK demo applications"
+LICENSE = "Freescale-EULA"
+LIC_FILES_CHKSUM = "file://${FSL_EULA_FILE};md5=c9ae442cf1f9dd6c13dfad64b0ffe73f"
+
+
+inherit externalsrc
+
+# We need to use a basic filepath here
+SOURCES_PATH = "${@d.getVar('FSL_LOCAL_MIRROR', 1).replace('file://','')}"
+
+EXTERNALSRC := "${SOURCES_PATH}/s32v234_sdk"
+
+EXTRA_OEMAKE = "APU_COMP=tct APU_PRECOMP=1 allsub V=1 "
+EXTRA_OEMAKE += "CROSS_COMPILE="${TARGET_PREFIX}""
+EXTRA_OEMAKE += "CROSS_COMPILE_SYSROOT=--sysroot=\"${STAGING_DIR_TARGET}\""
+
+OUTPUT_DIR_NAME = "vsdk/demos"
+INSTALL_DIR = "${D}/${OUTPUT_DIR_NAME}"
+
+fix_makefiles () {
+  for file in ${FILE_CHANGE_SA_TO_LINUX}; do
+    if grep "gnu-sa-d" $file; then
+      sed -i -e 's/gnu-sa-d/gnu-linux-d/g' $file
+    fi
+  done
+}
+
+do_configure_prepend() {
+  fix_makefiles
+}
+
+do_compile_prepend() {
+  fix_makefiles
+}
+
+do_install() {
+	mkdir -p "${INSTALL_DIR}"
+	cp *.elf "${INSTALL_DIR}/"
+}
+
+do_clean() {
+	make APU_COMP=tct APU_PRECOMP=1 cleansub
+	rm -rf ${WORKDIR}
+}
+
+FILES_${PN} += "/${OUTPUT_DIR_NAME}"
+FILES_${PN}-dbg += "/${OUTPUT_DIR_NAME}/.debug"
+
+COMPATIBLE_MACHINE = "(s32v234evb)|(s32v234pcie)|(s32v234bbmini)"

@@ -1,0 +1,78 @@
+ADAS (Advanced driver-assistance systems) / Vision Yocto Layer
+==============================================================
+
+Meta-adas Yocto layer provides support for the NXP Vision SDK for ADAS (VSDK)
+Yocto integration. Meta-adas provides a user-friendly interface to create a
+complete Linux distribution image containing the VSDK functionalities.
+In the process of image generation, the following tasks are automatically
+executed as part of the meta-adas functionalities:
+- Device tree update to add the VSDK requirements
+- VSDK Kernel module build and deploy
+- VSDK demos and applications build and deploy
+- Build and deploy of 3-rd party libraries dependencies for VSDK
+- Deploy the VSDK binaries to root file system and generate the SD card image
+
+
+Adding VSDK into a Yocto distribution using meta-adas.
+==============================================================
+Prerequisites: an existing Yocto distribution should be available.
+Meta-adas will just extend the existing Yocto distribution.
+
+- Get the meta-adas repository
+    use meta-adas archive provided in the release
+
+- Add the new meta-adas layer in the existing Yocto distribution:
+    edit conf/bblayers.conf directly
+
+- Download and unpack the VSDK archive prepared for Yocto integration to a
+  folder of your choice (e.g. “/opt/fsl_local_mirror”):
+
+    External location:
+    https://nxp.flexnetoperations.com/control/frse/product?child_plneID=713087&ver=CURRENT
+
+- Edit the file conf/local.conf in your build folder to specify the path to
+  the VSDK folder. For example:
+
+    FSL_LOCAL_MIRROR = "file:///opt/fsl_local_mirror"
+
+  Note: the name of the unpacked archive (e.g. s32v234_sdk) should not be
+  added in the FSL_LOCAL_MIRROR.
+  This is automatically appended in the meta-adas recipes.
+
+- You also need to confirm that you accept NXP's EULA by adding the following
+  to the build folder's conf/local.conf
+    ACCEPT_FSL_EULA = "1"
+
+- The existing images can be extended to include VSDK and all dependencies as
+  follows:
+    IMAGE_INSTALL +=  “packagegroup-fsl-adas-vsdk”
+
+
+VSDK Usage
+==============================================================
+For the final image, the VSDK modules are automatically inserted at boot time.
+The VSDK demos are located in folder /vsdk/demos/
+For details about how to run the VSDK demos, use the VSDK documentation
+delivered inside the VSDK archive: s32v234_sdk/docs/
+
+
+NXP ADAS/Vision SDK Recipes
+================================
+
+The meta-adas layer uses the following BitBake recipes to build various
+components contained in the NXP Vision SDK for ADAS.
+
+The recipes follow the VSDK components outlined in the official VisionSDK User
+Guide mirroring the VSDK installation layout.
+
+
+Meta-adas limitations
+================================
+- The current meta-adas only supports packages building using the aarch64 gcc
+  Linux toolchain. The packages requiring other toolchain are provided as
+  pre-build ELF inside the VSDK archive. In the special case when re-building
+  of these packages is necessary, please follow the VSDK documentation
+  (s32v234_sdk/docs/) for manually installing and building these packages
+
+- Some of the 3rd party libraries are provided as pre-built binaries inside
+  the VSDK archive.
