@@ -7,7 +7,6 @@ PROVIDES = "packagegroup-vsdk-libs-3rdparty"
 
 RDEPENDS_packagegroup-vsdk-libs-3rdparty = "\
 	boost \
-	ffmpeg \
 	ocv \
 "
 
