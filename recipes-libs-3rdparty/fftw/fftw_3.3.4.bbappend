@@ -1,4 +1,5 @@
 PROVIDES += "fftw"
+FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
 
 # it actually depends on oal/user, but there is no individual oal/user recipe
 # apex-add will build the oal/user dependency
@@ -17,7 +18,7 @@ INSTALL_DIR = "${THRDPARTY_LIBS_DIR}/${OUTPUT_DIR_NAME}"
 
 B = "${WORKDIR}/${BPN}-${PV}"
 
-SRC_URI += "file://${VSDK_FFTW_BUILD_DIR}/fftw_3_4_4.patch"
+SRC_URI += "file://fftw_3_4_4.patch"
 
 
 ARM_INCS="-I${VSDK_LAYOUT_PATH}/include"
@@ -28,6 +29,7 @@ PREFIX="--prefix=${INSTALL_DIR} --host=${TARGET_SYS} --enable-single --enable-ne
 PREFIX2="-mcpu=cortex-a53 -nostdlib -fno-builtin -fno-exceptions"
 
 do_configure() {
+	mkdir -p "${INSTALL_DIR}"
 	./configure CPPFLAGS="${ARM_INCS}" LDFLAGS="${ARM_LIBS_PATH}" ${PREFIX} CC="${CC} ${PREFIX2}" LIBS="${LIBS}"
 }
 
