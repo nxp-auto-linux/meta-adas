@@ -1,6 +1,6 @@
 DESCRIPTION = "Vision SDK demo applications"
 LICENSE = "Freescale-EULA"
-LIC_FILES_CHKSUM = "file://${FSL_EULA_FILE};md5=c9ae442cf1f9dd6c13dfad64b0ffe73f"
+LIC_FILES_CHKSUM = "file://${FSL_EULA_FILE};md5=d4f548f93b5fe0ee2bc86758c344412d"
 
 
 inherit externalsrc
