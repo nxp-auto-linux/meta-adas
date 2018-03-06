@@ -25,12 +25,22 @@ fix_makefiles () {
   done
 }
 
+fix_arm_define () {
+  file="${EXTERNALSRC}/build/nbuild/toolchains/aarch64-linux-gnu.mk"
+  if grep "D__arm__" $file; then
+    sed -i -e 's/-D__arm__/ /g' $file
+  fi
+}
+
+
 do_configure_prepend() {
   fix_makefiles
+  fix_arm_define
 }
 
 do_compile_prepend() {
   fix_makefiles
+  fix_arm_define
 }
 
 do_install() {
