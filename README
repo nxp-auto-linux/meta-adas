@@ -54,7 +54,7 @@ added in the default VSDK package group because ffmpeg has commercial license
 flags: see recipes-libs-3rdparty/ffmpeg/ffmpeg_2.8.5.bb
 In order to be added into the image, you must acknowledge that you are aware of
 the ffmpeg license requirements by adding the following in the conf/local.conf
-        LICENSE_FLAGS_WHITELIST="commercial"
+        LICENSE_FLAGS_WHITELIST_append = " commercial "
 And then you can include these demos as follows:
     IMAGE_INSTALL +=  "packagegroup-fsl-adas-vsdk"
     IMAGE_INSTALL +=  "packagegroup-vsdk-demos-ffmpeg"
