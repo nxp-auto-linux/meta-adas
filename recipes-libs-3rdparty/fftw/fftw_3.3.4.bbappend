@@ -38,7 +38,6 @@ do_install() {
 
   install -d ${D}/usr
   cp -r ${INSTALL_DIR}/* ${D}/usr
-  rm ${D}/usr/share/info/dir
   chrpath -d ${D}/usr/bin/fftwf-wisdom
 }
 
