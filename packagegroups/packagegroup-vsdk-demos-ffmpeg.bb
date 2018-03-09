@@ -19,7 +19,6 @@ DEMOS_FFMPEG = "\
 	feature-tracking \
 	pedestrian-detection-aggcf \
 	pedestrian-detection \
-	cnn-classifier \
 	lane-departure-warning \
 	apex-isp-ldw-cv \
 	isp-ov10635-viu-dcu \
