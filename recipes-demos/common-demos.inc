@@ -49,6 +49,7 @@ do_install() {
 }
 
 do_clean() {
+	cd ${EXTERNALSRC_BUILD}
 	make APU_COMP=tct APU_PRECOMP=1 cleansub
 	rm -rf ${WORKDIR}
 }
