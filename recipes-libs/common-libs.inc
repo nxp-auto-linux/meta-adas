@@ -14,8 +14,8 @@ KO_MODULE_NAME = "${PN}"
 
 # Workaround for the fact that our .ko recipes are not named
 # using the conventional 'kernel-module-<ko_name>'
-PROVIDES += "kernel-module-${@d.getVar('KO_MODULE_NAME', 1).replace('_','-')}"
-RPROVIDES_${PN} += "kernel-module-${@d.getVar('KO_MODULE_NAME', 1).replace('_','-')}"
+PROVIDES += "kernel-module-${@d.getVar('KO_MODULE_NAME', 1).replace('_','-')}${KERNEL_MODULE_PACKAGE_SUFFIX}"
+RPROVIDES_${PN} += "kernel-module-${@d.getVar('KO_MODULE_NAME', 1).replace('_','-')}${KERNEL_MODULE_PACKAGE_SUFFIX}"
 
 # We need to use a basic filepath here
 SOURCES_PATH = "${@d.getVar('FSL_LOCAL_MIRROR', 1).replace('file://','')}"
