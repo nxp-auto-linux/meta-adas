@@ -48,10 +48,12 @@ do_install() {
 	cp *.elf "${INSTALL_DIR}/"
 }
 
-do_clean() {
+
+do_clean[postfuncs] += "do_clean_local"
+
+do_clean_local () {
 	cd ${EXTERNALSRC_BUILD}
 	make APU_COMP=tct APU_PRECOMP=1 cleansub
-	rm -rf ${WORKDIR}
 }
 
 FILES_${PN} += "/${OUTPUT_DIR_NAME}"

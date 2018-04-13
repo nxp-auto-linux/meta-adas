@@ -37,9 +37,12 @@ do_install() {
 	install -m 0644 ${KO_MODULE_NAME}.ko "${INSTALL_DIR}/"
 }
 
-do_clean() {
+
+do_clean[postfuncs] += "do_clean_local"
+
+do_clean_local () {
+	cd ${EXTERNALSRC_BUILD}
 	make "LINUX_S32V234_DIR=${KBUILD_OUTPUT}" cleansub
-	rm -rf ${WORKDIR}
 }
 
 # Auto insert module
