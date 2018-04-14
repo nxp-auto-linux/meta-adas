@@ -59,5 +59,6 @@ do_clean_local () {
 FILES_${PN} += "/${OUTPUT_DIR_NAME}"
 FILES_${PN}-dbg += "/${OUTPUT_DIR_NAME}/.debug"
 INSANE_SKIP_${PN} += "ldflags"
+RDEPENDS_${PN} += "ocv"
 
 COMPATIBLE_MACHINE = "(s32v234evb)|(s32v234pcie)|(s32v234bbmini)"

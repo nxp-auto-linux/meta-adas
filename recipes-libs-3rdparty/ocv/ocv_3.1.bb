@@ -17,3 +17,4 @@ INSANE_SKIP_${PN} += "build-deps"
 
 FILES_${PN} += "/usr/share/OpenCV/.cmake"
 FILES_${PN} += "/usr/share/OpenCV/*.xml"
+RDEPENDS_${PN} += "ffmpeg"
