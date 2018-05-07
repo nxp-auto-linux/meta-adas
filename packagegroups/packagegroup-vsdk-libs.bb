@@ -9,7 +9,6 @@ RDEPENDS_packagegroup-vsdk-libs = "\
 	apex-drivers \
 	cam-generic \
 	oal \
-	sram \
 	jpegdec \
 	viu \
 	fdma \
