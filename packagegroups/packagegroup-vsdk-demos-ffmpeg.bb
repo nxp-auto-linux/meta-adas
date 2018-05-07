@@ -25,7 +25,6 @@ DEMOS_FFMPEG = "\
 	isp-stereo-apexbm \
 	isp-stereo-calib \
 	apex-isp-face-detection-cv \
-	neon-fftw-cv \
 	neon-gauss3x3-cv \
 	h264-encoder-cv \
 	web-server \
