@@ -1,7 +1,10 @@
 # This recipe deploy the M0 toolchain in binary format required by VSDK
 
-LICENSE = "GPL-2.0"
-LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/GPL-2.0;md5=801f80980d171dd6425610833a22dbe6"
+LICENSE = "GPL-3.0-with-GCC-exception & GPLv3"
+LIC_FILES_CHKSUM = "\
+    file://${COMMON_LICENSE_DIR}/GPL-3.0-with-GCC-exception;md5=aef5f35c9272f508be848cd99e0151df \
+    file://${COMMON_LICENSE_DIR}/GPL-3.0;md5=c79ff39f19dfec6d293b95dea7b07891 \
+"
 
 inherit native
 
