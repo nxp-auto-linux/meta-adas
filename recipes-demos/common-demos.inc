@@ -4,6 +4,7 @@ LIC_FILES_CHKSUM = "file://${FSL_EULA_FILE};md5=d4f548f93b5fe0ee2bc86758c344412d
 
 
 inherit externalsrc
+inherit check_license
 
 # We need to use a basic filepath here
 SOURCES_PATH = "${@d.getVar('FSL_LOCAL_MIRROR', 1).replace('file://','')}"
