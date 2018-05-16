@@ -52,8 +52,10 @@ Meta-adas will just extend the existing Yocto distribution.
   in the conf/local.conf
     LICENSE_FLAGS_WHITELIST_append = " commercial "
 
-- And then you can include the VSDK demos as follows:
+- And then you can include the VSDK demos as follows in the desired image:
     IMAGE_INSTALL +=  "packagegroup-fsl-adas-vsdk"
+  or build the  fsl-image-vsdk (having packagegroup-fsl-adas-vsdk already included)
+    bitbake fsl-image-vsdk
 
 
 VSDK Usage
