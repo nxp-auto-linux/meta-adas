@@ -24,12 +24,12 @@ Meta-adas will just extend the existing Yocto distribution.
 - Add the new meta-adas layer in the existing Yocto distribution:
     edit conf/bblayers.conf directly
 
-- Download and unpack the VSDK archive prepared for Yocto integration to a
+- Download and install the VSDK archive prepared for Yocto integration to a
   folder of your choice (e.g. “/opt/fsl_local_mirror”):
 
     External location:
     https://nxp.flexnetoperations.com/control/frse/product?child_plneID=713087&ver=CURRENT
-    Latest VSDK version tested with meta-adas: VisionSDK_S32V2xx_RTM_1_0_0_yocto_4d2b9a.tar.gz
+    Latest VSDK version tested with meta-adas: VisionSDK_S32V2xx_RTM_1_1_1_src_edb61b.bin
 
 - Edit the file conf/local.conf in your build folder to specify the path to
   the VSDK folder. For example:
