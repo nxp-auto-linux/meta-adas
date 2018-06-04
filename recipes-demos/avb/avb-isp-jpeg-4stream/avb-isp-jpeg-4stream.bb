@@ -10,4 +10,4 @@ do_install_append() {
 	cp ${EXTERNALSRC}/demos/avb/extern/firmware/jpeg/theA5App.bin "${INSTALL_DIR}/${PN}"
 }
 
-DEPENDS += "sm-drv"
+RDEPENDS_${PN} += "sm-drv"
