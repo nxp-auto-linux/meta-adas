@@ -51,4 +51,4 @@ KERNEL_MODULE_AUTOLOAD += "${KO_MODULE_NAME}"
 FILES_${PN} += "${OUTPUT_DIR_NAME} ${sysconfdir}/modules-load.d"
 FILES_${PN}-dbg += "${OUTPUT_DIR_NAME}/.debug"
 
-COMPATIBLE_MACHINE = "(s32v234evb)|(s32v234pcie)|(s32v234bbmini)"
+COMPATIBLE_MACHINE = "(s32v234.*)"

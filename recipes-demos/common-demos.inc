@@ -65,4 +65,4 @@ RDEPENDS_${PN} += "ocv"
 DEPENDS_append = " dos2unix-native"
 DEPENDS_append = " m0-toolchain-native"
 
-COMPATIBLE_MACHINE = "(s32v234evb)|(s32v234pcie)|(s32v234bbmini)"
+COMPATIBLE_MACHINE = "(s32v234.*)"
