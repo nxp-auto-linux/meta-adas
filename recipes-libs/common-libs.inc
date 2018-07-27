@@ -45,8 +45,8 @@ do_clean_local () {
 	make "LINUX_S32V234_DIR=${KBUILD_OUTPUT}" cleansub
 }
 
-# Auto insert module
-KERNEL_MODULE_AUTOLOAD += "${KO_MODULE_NAME}"
+# Insert VSDK modules in a specific order as handled by vsdk-mod-order module
+RDEPENDS_${PN} += "vsdk-mod-order"
 
 FILES_${PN} += "${OUTPUT_DIR_NAME} ${sysconfdir}/modules-load.d"
 FILES_${PN}-dbg += "${OUTPUT_DIR_NAME}/.debug"
