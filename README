@@ -58,6 +58,34 @@ Meta-adas will just extend the existing Yocto distribution.
     bitbake fsl-image-vsdk
 
 
+
+Re-building VSDK APEX graphs
+==============================================================
+The VSDK archive provides pre-built APEX graphs built with TCT compiler.
+The pre-built graphs allow building the VSDK Linux applications and modules
+without installing an APU compiler
+
+For re-building the APU graphs the user should performs the following steps:
+
+    - Independently install a APU compiler, outside Yocto. Please follow the
+    VSDK documentation for installing a standalone APU compiler
+
+    - Configure the Yocto build to use the installed APU compiler (previous step)
+    and re-build the VSDK image.
+    Along with the standard build using the pre-compiled graphs, the following
+    setting should be added in build folder's conf/local.conf
+        APU_COMPILER_NXP = "<path to the installed NXP APU compiler>"
+	or
+        APU_COMPILER_TCT = "<path to the installed TCT APU compiler>"
+
+    For example:
+        APU_COMPILER_NXP = "/home/user/APU_Compiler_v1.0"
+
+Note: when changing the configuration from pre-built graphs to buildable graph
+    or switching between NXP and TCT compilers, it is recommended to clean the
+    VSDK sources.
+
+
 VSDK Usage
 ==============================================================
 For the final image, the VSDK modules are automatically inserted at boot time.
@@ -78,11 +106,5 @@ Guide mirroring the VSDK installation layout.
 
 Meta-adas limitations
 ================================
-- The current meta-adas only supports packages building using the aarch64 gcc
-  Linux toolchain. The packages requiring other toolchain are provided as
-  pre-build ELF inside the VSDK archive. In the special case when re-building
-  of these packages is necessary, please follow the VSDK documentation
-  (s32v234_sdk/docs/) for manually installing and building these packages
-
 - Some of the 3rd party libraries are provided as pre-built binaries inside
   the VSDK archive.

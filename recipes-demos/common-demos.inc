@@ -11,7 +11,25 @@ SOURCES_PATH = "${@d.getVar('FSL_LOCAL_MIRROR', 1).replace('file://','')}"
 
 EXTERNALSRC := "${SOURCES_PATH}/s32v234_sdk"
 
-EXTRA_OEMAKE = "APU_COMP=tct APU_PRECOMP=1 allsub V=1 "
+# Default APU compiler options: no APU compiler, using the precompiled tct
+# graphs from the VSDK release
+APU_OPT_DEFAULT = "APU_COMP=tct APU_PRECOMP=1"
+
+# Use TCT APU toolchain to compile the APU graphs.
+APU_OPT_TCT = "APU_COMP=tct APU_TOOLS=${APU_COMPILER_TCT}"
+
+# Use NXP APU toolchain to compile the APU graphs.
+APU_OPT_NXP = "APU_COMP=nxp APU_TOOLS=${APU_COMPILER_NXP}"
+
+# If the NXP/TCT APU toolchain install path is defined in conf/local.conf
+# the graphs are compiled with this toolchain
+# Else, the default precompiled tct graphs are used
+APU_OPT = "${@d.getVar('APU_OPT_NXP', True) if d.getVar('APU_COMPILER_NXP', True) \
+	 else d.getVar('APU_OPT_TCT', True) if d.getVar('APU_COMPILER_TCT', True) \
+	 else d.getVar('APU_OPT_DEFAULT', True)}"
+
+EXTRA_OEMAKE = "${APU_OPT} allsub V=1 "
+
 EXTRA_OEMAKE += "CROSS_COMPILE="${TARGET_PREFIX}""
 EXTRA_OEMAKE += "CROSS_COMPILE_SYSROOT=--sysroot=\"${STAGING_DIR_TARGET}\""
 EXTRA_OEMAKE += "CROSS_COMPILE_M0_ELF="${M0_TOOLCHAIN_DIR}/bin/arm-eabi-""
@@ -55,7 +73,7 @@ do_clean[postfuncs] += "do_clean_local"
 
 do_clean_local () {
 	cd ${EXTERNALSRC_BUILD}
-	make APU_COMP=tct APU_PRECOMP=1 cleansub
+	make ${APU_OPT} cleansub
 }
 
 FILES_${PN} += "/${OUTPUT_DIR_NAME}"
@@ -63,6 +81,7 @@ FILES_${PN}-dbg += "/${OUTPUT_DIR_NAME}/.debug"
 INSANE_SKIP_${PN} += "ldflags"
 RDEPENDS_${PN} += "ocv"
 DEPENDS_append = " dos2unix-native"
+DEPENDS_append = " tcl-native"
 DEPENDS_append = " m0-toolchain-native"
 
 COMPATIBLE_MACHINE = "(s32v234.*)"
