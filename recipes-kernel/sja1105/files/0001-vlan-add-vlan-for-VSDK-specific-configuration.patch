@@ -1,6 +1,6 @@
-From 929285bcaae87b3b35e912deee7e77034013fcb1 Mon Sep 17 00:00:00 2001
-From: Daniel Lazar <daniel.lazar@nxp.com>
-Date: Thu, 31 May 2018 12:11:11 +0200
+From 7031c4391115946db0c18310c3a8dabf50ba3266 Thu Jul 19 09:25:01 2018 +0300
+From: Zdenek Valek <zdenek.valek@nxp.com>
+Date: Thu, 9 Aug 2018 17:16:00 +0200
 Subject: [PATCH] vlan: add vlan for VSDK specific configuration
 
 Signed-off-by: Ludovit Minarik <ludovit.minarik@nxp.com>
@@ -8,21 +8,23 @@ Signed-off-by: Zdenek Valek <zdenek.valek@nxp.com>
 Signed-off-by: Catalin Udma <catalin-dan.udma@nxp.com>
 Signed-off-by: Daniel Lazar <daniel.lazar@nxp.com>
 ---
- .../SJA1105Q_firmware_sw0_bbmini.py                | 30 ++++++++++++++++++
- .../SJA1105Q_firmware_sw0_evb.py                   | 37 ++++++++++++++++++++++
- .../SJA1105Q_firmware_sw1_bbmini.py                | 30 ++++++++++++++++++
- .../SJA1105Q_firmware_sw1_evb.py                   | 16 ++++++++++
- 4 files changed, 113 insertions(+)
 
 diff --git a/tools/firmware_generation/SJA1105Q_firmware_sw0_bbmini.py b/tools/firmware_generation/SJA1105Q_firmware_sw0_bbmini.py
-index de62cd8..5042961 100755
+index 55b7435..007356e 100755
 --- a/tools/firmware_generation/SJA1105Q_firmware_sw0_bbmini.py
 +++ b/tools/firmware_generation/SJA1105Q_firmware_sw0_bbmini.py
-@@ -201,6 +201,36 @@ vlan_lookup_table.append({
+@@ -234,6 +234,43 @@ vlan_lookup_table.append({
      "TAG_PORT"   : 0x00, # Egress frames are untagged
      "VLANID"     : default_vlan})
  
 +# Camera VLANs
++vlan_lookup_table.append({
++    "VING_MIRR"  : 0,
++    "VEGR_MIRR"  : 0,
++    "VMEMB_PORT" : 0x11, # Ports 4 & 0 are members of VLAN
++    "VLAN_BC"    : 0x11, # Ports 4 & 0 are in broadcast domain
++    "TAG_PORT"   : 0x01, # Egress frames are tagged on port 0
++    "VLANID"     : 100})    
 +vlan_lookup_table.append({
 +    "VING_MIRR"  : 0,
 +    "VEGR_MIRR"  : 0,
@@ -172,5 +174,5 @@ index 5876458..5c6b714 100755
  # L2 Lookup Parameters Table
  #############################################################################
 -- 
-2.7.4
+2.11.0
 

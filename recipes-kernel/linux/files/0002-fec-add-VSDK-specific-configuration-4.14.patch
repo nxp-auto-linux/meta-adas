@@ -1,0 +1,254 @@
+From d234a42be7230d6bb2b7cbb14e1a2b67cb85f810 Wed Jul 18 11:38:46 2018
+From: Zdenek Valek <zdenek.valek@nxp.com>
+Date: Thu, 9 Aug 2018 17:16:00 +0200
+Subject: [PATCH 2/2] fec: add VSDK specific configuration
+
+Signed-off-by: Ludovit Minarik <ludovit.minarik@nxp.com>
+Signed-off-by: Catalin Udma <catalin-dan.udma@nxp.com>
+Signed-off-by: Zdenek Valek <zdenek.valek@nxp.com>
+---
+
+diff --git a/drivers/net/ethernet/freescale/fec.h b/drivers/net/ethernet/freescale/fec.h
+index 41ea7b2ba19c..f6acce3a7efe 100644
+--- a/drivers/net/ethernet/freescale/fec.h
++++ b/drivers/net/ethernet/freescale/fec.h
+@@ -327,9 +327,9 @@ struct bufdesc_ex {
+ #define RCMR_MATCHEN		(0x1 << 16)
+ #define RCMR_CMP_CFG(v, n)	(((v) & 0x7) <<  (n << 2))
+ #define RCMR_CMP_1		(RCMR_CMP_CFG(0, 0) | RCMR_CMP_CFG(1, 1) | \
+-				RCMR_CMP_CFG(2, 2) | RCMR_CMP_CFG(3, 3))
+-#define RCMR_CMP_2		(RCMR_CMP_CFG(4, 0) | RCMR_CMP_CFG(5, 1) | \
+-				RCMR_CMP_CFG(6, 2) | RCMR_CMP_CFG(7, 3))
++				RCMR_CMP_CFG(3, 2) | RCMR_CMP_CFG(4, 3))
++#define RCMR_CMP_2		(RCMR_CMP_CFG(2, 0) | RCMR_CMP_CFG(2, 1) | \
++				RCMR_CMP_CFG(2, 2) | RCMR_CMP_CFG(2, 3))
+ #define RCMR_CMP(X)		(((X) == 1) ? RCMR_CMP_1 : RCMR_CMP_2)
+ #define FEC_TX_BD_FTYPE(X)	(((X) & 0xf) << 20)
+ 
+@@ -510,8 +510,16 @@ struct fec_enet_private {
+ 
+ 	bool ptp_clk_on;
+ 	struct mutex ptp_clk_mutex;
+-	unsigned int num_tx_queues;
+-	unsigned int num_rx_queues;
++	/*  Number of queues which shall be enabled by the driver
++	    (the driver is responsible for the whole controller) */
++	unsigned int num_tx_queues; /* Number of HW supported TX queues */
++	unsigned int num_rx_queues; /* Number of HW supported RX queues */
++	/*  Number of queues actually handled by the driver. Some queues
++	    may have different handling sw thus the driver will not use them. */
++	/*  Number of tx queues handled by the driver */
++	unsigned int num_tx_queues_served;
++	/*  Number of rx queues handled by the driver */
++	unsigned int num_rx_queues_served;
+ 
+ 	/* The saved address of a sent-in-place packet/buffer, for skfree(). */
+ 	struct fec_enet_priv_tx_q *tx_queue[FEC_ENET_MAX_TX_QS];
+diff --git a/drivers/net/ethernet/freescale/fec_main.c b/drivers/net/ethernet/freescale/fec_main.c
+index b8acb717a518..cb257275044f 100644
+--- a/drivers/net/ethernet/freescale/fec_main.c
++++ b/drivers/net/ethernet/freescale/fec_main.c
+@@ -74,6 +74,10 @@ static void fec_enet_itr_coal_init(struct net_device *ndev);
+ 
+ #define FEC_ENET_GET_QUQUE(_x) ((_x == 0) ? 1 : ((_x == 1) ? 2 : 0))
+ 
++#define AVB_FIQ_EXTENSION
++#define AVB_FIQ_RESERVED_RXQ 1
++#define AVB_FIQ_RESERVED_TXQ 0
++
+ /* Pause frame feild and FIFO threshold */
+ #define FEC_ENET_FCE	(1 << 5)
+ #define FEC_ENET_RSEM_V	0x84
+@@ -800,7 +804,7 @@ static void fec_enet_bd_init(struct net_device *dev)
+ 	unsigned int i;
+ 	unsigned int q;
+ 
+-	for (q = 0; q < fep->num_rx_queues; q++) {
++	for (q = 0; q < fep->num_rx_queues_served; q++) {
+ 		/* Initialize the receive buffer descriptors. */
+ 		rxq = fep->rx_queue[q];
+ 		bdp = rxq->bd.base;
+@@ -822,7 +826,7 @@ static void fec_enet_bd_init(struct net_device *dev)
+ 		rxq->bd.cur = rxq->bd.base;
+ 	}
+ 
+-	for (q = 0; q < fep->num_tx_queues; q++) {
++	for (q = 0; q < fep->num_tx_queues_served; q++) {
+ 		/* ...and the same for transmit */
+ 		txq = fep->tx_queue[q];
+ 		bdp = txq->bd.base;
+@@ -857,7 +861,7 @@ static void fec_enet_active_rxring(struct net_device *ndev)
+ 	struct fec_enet_private *fep = netdev_priv(ndev);
+ 	int i;
+ 
+-	for (i = 0; i < fep->num_rx_queues; i++)
++	for (i = 0; i < fep->num_rx_queues_served; i++)
+ 		writel(0, fep->rx_queue[i]->bd.reg_desc_active);
+ }
+ 
+@@ -868,7 +872,7 @@ static void fec_enet_enable_ring(struct net_device *ndev)
+ 	struct fec_enet_priv_rx_q *rxq;
+ 	int i;
+ 
+-	for (i = 0; i < fep->num_rx_queues; i++) {
++	for (i = 0; i < fep->num_rx_queues_served; i++) {
+ 		rxq = fep->rx_queue[i];
+ 		writel(rxq->bd.dma, fep->hwp + FEC_R_DES_START(i));
+ 		writel(PKT_MAXBUF_SIZE, fep->hwp + FEC_R_BUFF_SIZE(i));
+@@ -879,14 +883,21 @@ static void fec_enet_enable_ring(struct net_device *ndev)
+ 			       fep->hwp + FEC_RCMR(i));
+ 	}
+ 
+-	for (i = 0; i < fep->num_tx_queues; i++) {
++	for (i = 0; i < fep->num_tx_queues_served; i++) {
+ 		txq = fep->tx_queue[i];
+ 		writel(txq->bd.dma, fep->hwp + FEC_X_DES_START(i));
++	}
+ 
++	/* Enable DMAs for additional queues
++	- queue 0 is enabled by default but other queues
++	  require to be explicitly enabled
++	- the DMA is shared by RX and TX queues so enable
++	  it if at least one of them exists
++	- it must be done before enabling the controller */
++	for (i = 1; i < fep->num_tx_queues; i++) {
+ 		/* enable DMA1/2 */
+-		if (i)
+-			writel(DMA_CLASS_EN | IDLE_SLOPE(i),
+-			       fep->hwp + FEC_DMA_CFG(i));
++		writel(DMA_CLASS_EN | IDLE_SLOPE(i),
++		       fep->hwp + FEC_DMA_CFG(i));
+ 	}
+ }
+ 
+@@ -896,7 +907,7 @@ static void fec_enet_reset_skb(struct net_device *ndev)
+ 	struct fec_enet_priv_tx_q *txq;
+ 	int i, j;
+ 
+-	for (i = 0; i < fep->num_tx_queues; i++) {
++	for (i = 0; i < fep->num_tx_queues_served; i++) {
+ 		txq = fep->tx_queue[i];
+ 
+ 		for (j = 0; j < txq->bd.ring_size; j++) {
+@@ -2730,7 +2741,7 @@ static void fec_enet_free_buffers(struct net_device *ndev)
+ 	struct fec_enet_priv_rx_q *rxq;
+ 	unsigned int q;
+ 
+-	for (q = 0; q < fep->num_rx_queues; q++) {
++	for (q = 0; q < fep->num_rx_queues_served; q++) {
+ 		rxq = fep->rx_queue[q];
+ 		bdp = rxq->bd.base;
+ 		for (i = 0; i < rxq->bd.ring_size; i++) {
+@@ -2747,7 +2758,7 @@ static void fec_enet_free_buffers(struct net_device *ndev)
+ 		}
+ 	}
+ 
+-	for (q = 0; q < fep->num_tx_queues; q++) {
++	for (q = 0; q < fep->num_tx_queues_served; q++) {
+ 		txq = fep->tx_queue[q];
+ 		bdp = txq->bd.base;
+ 		for (i = 0; i < txq->bd.ring_size; i++) {
+@@ -2766,7 +2777,7 @@ static void fec_enet_free_queue(struct net_device *ndev)
+ 	int i;
+ 	struct fec_enet_priv_tx_q *txq;
+ 
+-	for (i = 0; i < fep->num_tx_queues; i++)
++	for (i = 0; i < fep->num_tx_queues_served; i++)
+ 		if (fep->tx_queue[i] && fep->tx_queue[i]->tso_hdrs) {
+ 			txq = fep->tx_queue[i];
+ 			dma_free_coherent(&fep->pdev->dev,
+@@ -2775,9 +2786,9 @@ static void fec_enet_free_queue(struct net_device *ndev)
+ 					  txq->tso_hdrs_dma);
+ 		}
+ 
+-	for (i = 0; i < fep->num_rx_queues; i++)
++	for (i = 0; i < fep->num_rx_queues_served; i++)
+ 		kfree(fep->rx_queue[i]);
+-	for (i = 0; i < fep->num_tx_queues; i++)
++	for (i = 0; i < fep->num_tx_queues_served; i++)
+ 		kfree(fep->tx_queue[i]);
+ }
+ 
+@@ -2788,7 +2799,7 @@ static int fec_enet_alloc_queue(struct net_device *ndev)
+ 	int ret = 0;
+ 	struct fec_enet_priv_tx_q *txq;
+ 
+-	for (i = 0; i < fep->num_tx_queues; i++) {
++	for (i = 0; i < fep->num_tx_queues_served; i++) {
+ 		txq = kzalloc(sizeof(*txq), GFP_KERNEL);
+ 		if (!txq) {
+ 			ret = -ENOMEM;
+@@ -2813,7 +2824,7 @@ static int fec_enet_alloc_queue(struct net_device *ndev)
+ 		}
+ 	}
+ 
+-	for (i = 0; i < fep->num_rx_queues; i++) {
++	for (i = 0; i < fep->num_rx_queues_served; i++) {
+ 		fep->rx_queue[i] = kzalloc(sizeof(*fep->rx_queue[i]),
+ 					   GFP_KERNEL);
+ 		if (!fep->rx_queue[i]) {
+@@ -2915,11 +2926,11 @@ static int fec_enet_alloc_buffers(struct net_device *ndev)
+ 	struct fec_enet_private *fep = netdev_priv(ndev);
+ 	unsigned int i;
+ 
+-	for (i = 0; i < fep->num_rx_queues; i++)
++	for (i = 0; i < fep->num_rx_queues_served; i++)
+ 		if (fec_enet_alloc_rxq_buffers(ndev, i))
+ 			return -ENOMEM;
+ 
+-	for (i = 0; i < fep->num_tx_queues; i++)
++	for (i = 0; i < fep->num_tx_queues_served; i++)
+ 		if (fec_enet_alloc_txq_buffers(ndev, i))
+ 			return -ENOMEM;
+ 	return 0;
+@@ -3236,7 +3247,7 @@ static int fec_enet_init(struct net_device *ndev)
+ 	fec_set_mac_address(ndev, NULL);
+ 
+ 	/* Set receive and transmit descriptor base. */
+-	for (i = 0; i < fep->num_rx_queues; i++) {
++	for (i = 0; i < fep->num_rx_queues_served; i++) {
+ 		struct fec_enet_priv_rx_q *rxq = fep->rx_queue[i];
+ 		unsigned size = dsize * rxq->bd.ring_size;
+ 
+@@ -3252,7 +3263,7 @@ static int fec_enet_init(struct net_device *ndev)
+ 		rxq->bd.last = (struct bufdesc *)(((void *)cbd_base) - dsize);
+ 	}
+ 
+-	for (i = 0; i < fep->num_tx_queues; i++) {
++	for (i = 0; i < fep->num_tx_queues_served; i++) {
+ 		struct fec_enet_priv_tx_q *txq = fep->tx_queue[i];
+ 		unsigned size = dsize * txq->bd.ring_size;
+ 
+@@ -3456,6 +3467,19 @@ fec_probe(struct platform_device *pdev)
+ 		goto failed_ioremap;
+ 	}
+ 
++#ifdef AVB_FIQ_EXTENSION
++	if (num_rx_qs < 2) {
++		ret = -ENOMEM;
++		goto failed_avb;
++	}
++	/* Save one Rx queue for AVB */
++	fep->num_rx_queues_served = num_rx_qs - AVB_FIQ_RESERVED_RXQ;
++	fep->num_tx_queues_served = num_tx_qs - AVB_FIQ_RESERVED_TXQ;
++#else
++	fep->num_rx_queues_served = num_rx_qs;
++	fep->num_tx_queues_served = num_tx_qs;
++#endif
++
+ 	fep->pdev = pdev;
+ 	fep->dev_id = dev_id++;
+ 
+@@ -3634,6 +3658,9 @@ fec_probe(struct platform_device *pdev)
+ 	of_node_put(phy_node);
+ failed_phy:
+ 	dev_id--;
++#ifdef AVB_FIQ_EXTENSION
++failed_avb:
++#endif
+ failed_ioremap:
+ 	free_netdev(ndev);
+
+-- 
+2.11.0
+
