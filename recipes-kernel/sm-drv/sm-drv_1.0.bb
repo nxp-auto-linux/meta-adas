@@ -14,16 +14,15 @@ S = "${WORKDIR}/git/driver"
 # this module is not installed automatically
 # a special manual procedure is needed when running AVB demos. 
 # See <VSDK>/demos/avb/README.txt
-DESTDIR = "/vsdk/demos"
 EXTRA_OEMAKE_append = " KERNELDIR=${KBUILD_OUTPUT}"
 
 do_install() {
-	install -d "${D}/${DESTDIR}"
-	cp sm_drv.ko "${D}/${DESTDIR}"
+	install -d "${D}/${VSDK_OUTPUT_DIR_NAME}"
+	cp sm_drv.ko "${D}/${VSDK_OUTPUT_DIR_NAME}"
 }
 
 
-FILES_${PN} += "${DESTDIR}/sm_drv.ko"
+FILES_${PN} += "${VSDK_OUTPUT_DIR_NAME}/sm_drv.ko"
 
 PROVIDES = "kernel-module-sm_drv${KERNEL_MODULE_PACKAGE_SUFFIX}"
 RPROVIDES_${PN} = "kernel-module-sm_drv${KERNEL_MODULE_PACKAGE_SUFFIX}"

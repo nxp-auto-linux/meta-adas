@@ -11,6 +11,10 @@ do_install_append() {
 	install -d ${D}/${sysconfdir}/init.d
 	install -d ${D}/${sysconfdir}/rc5.d
 	install -d ${D}/${sysconfdir}/rc3.d
+
+	# Replace the text with the content of VSDK_OUTPUT_DIR_NAME variable
+	# Use + as sed separator, to avoid escaping / contained in the path
+	sed -i -e "s+VSDK_OUTPUT_DIR_NAME+${VSDK_OUTPUT_DIR_NAME}+g" ${WORKDIR}/vsdk_mod.sh
 	install -m 755 ${WORKDIR}/vsdk_mod.sh ${D}/${sysconfdir}/init.d/vsdk_mod.sh
 	ln -sf ../init.d/vsdk_mod.sh      ${D}${sysconfdir}/rc5.d/S90vsdk_mod.sh
 	ln -sf ../init.d/vsdk_mod.sh      ${D}${sysconfdir}/rc3.d/S90vsdk_mod.sh

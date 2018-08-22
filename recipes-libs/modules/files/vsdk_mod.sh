@@ -11,13 +11,13 @@
 # Copyright 2018 NXP
 
 
-insmod /lib/modules/`uname -r`/apex.ko
-insmod /lib/modules/`uname -r`/oal_cma.ko
-insmod /lib/modules/`uname -r`/csi.ko
-insmod /lib/modules/`uname -r`/cam.ko
-insmod /lib/modules/`uname -r`/seq.ko
-insmod /lib/modules/`uname -r`/fdma.ko
-insmod /lib/modules/`uname -r`/h264enc.ko
-insmod /lib/modules/`uname -r`/h264dcd.ko
-insmod /lib/modules/`uname -r`/jpegdcd.ko
-insmod /lib/modules/`uname -r`/viulite.ko
+insmod VSDK_OUTPUT_DIR_NAME/apex.ko
+insmod VSDK_OUTPUT_DIR_NAME/oal_cma.ko
+insmod VSDK_OUTPUT_DIR_NAME/csi.ko
+insmod VSDK_OUTPUT_DIR_NAME/cam.ko
+insmod VSDK_OUTPUT_DIR_NAME/seq.ko
+insmod VSDK_OUTPUT_DIR_NAME/fdma.ko
+insmod VSDK_OUTPUT_DIR_NAME/h264enc.ko
+insmod VSDK_OUTPUT_DIR_NAME/h264dcd.ko
+insmod VSDK_OUTPUT_DIR_NAME/jpegdcd.ko
+insmod VSDK_OUTPUT_DIR_NAME/viulite.ko

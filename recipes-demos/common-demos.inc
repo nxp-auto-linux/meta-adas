@@ -34,8 +34,7 @@ EXTRA_OEMAKE += "CROSS_COMPILE="${TARGET_PREFIX}""
 EXTRA_OEMAKE += "CROSS_COMPILE_SYSROOT=--sysroot=\"${STAGING_DIR_TARGET}\""
 EXTRA_OEMAKE += "CROSS_COMPILE_M0_ELF="${M0_TOOLCHAIN_DIR}/bin/arm-eabi-""
 
-OUTPUT_DIR_NAME = "vsdk/demos"
-INSTALL_DIR = "${D}/${OUTPUT_DIR_NAME}"
+INSTALL_DIR = "${D}${VSDK_OUTPUT_DIR_NAME}"
 
 fix_makefiles () {
   for file in ${FILE_CHANGE_SA_TO_LINUX}; do
@@ -76,8 +75,8 @@ do_clean_local () {
 	make ${APU_OPT} cleansub
 }
 
-FILES_${PN} += "/${OUTPUT_DIR_NAME}"
-FILES_${PN}-dbg += "/${OUTPUT_DIR_NAME}/.debug"
+FILES_${PN} += "${VSDK_OUTPUT_DIR_NAME}"
+FILES_${PN}-dbg += "${VSDK_OUTPUT_DIR_NAME}/.debug"
 INSANE_SKIP_${PN} += "ldflags"
 RDEPENDS_${PN} += "ocv"
 DEPENDS_append = " dos2unix-native"

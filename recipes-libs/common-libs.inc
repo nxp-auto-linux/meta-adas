@@ -29,8 +29,7 @@ EXTRA_OEMAKE = "LINUX_S32V234_DIR=${KBUILD_OUTPUT}"
 # Make sure kernel modules are packaged unstripped
 INHIBIT_PACKAGE_STRIP = "1"
 
-OUTPUT_DIR_NAME = "/lib/modules/${KERNEL_VERSION}"
-INSTALL_DIR = "${D}${OUTPUT_DIR_NAME}"
+INSTALL_DIR = "${D}${VSDK_OUTPUT_DIR_NAME}"
 
 do_install() {
 	install -d "${INSTALL_DIR}/"
@@ -48,7 +47,7 @@ do_clean_local () {
 # Insert VSDK modules in a specific order as handled by vsdk-mod-order module
 RDEPENDS_${PN} += "vsdk-mod-order"
 
-FILES_${PN} += "${OUTPUT_DIR_NAME} ${sysconfdir}/modules-load.d"
-FILES_${PN}-dbg += "${OUTPUT_DIR_NAME}/.debug"
+FILES_${PN} += "${VSDK_OUTPUT_DIR_NAME} ${sysconfdir}/modules-load.d"
+FILES_${PN}-dbg += "${VSDK_OUTPUT_DIR_NAME}/.debug"
 
 COMPATIBLE_MACHINE = "(s32v234.*)"
