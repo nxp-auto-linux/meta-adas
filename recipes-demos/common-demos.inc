@@ -36,6 +36,32 @@ EXTRA_OEMAKE += "CROSS_COMPILE_M0_ELF="${M0_TOOLCHAIN_DIR}/bin/arm-eabi-""
 
 INSTALL_DIR = "${D}${VSDK_OUTPUT_DIR_NAME}"
 
+
+python check_host_gcc() {
+    import re, subprocess
+
+    # VSDK build system requires a minimum version for HOST GCC
+    MINIMUM_GCC = "4.9"
+
+    compiler = d.getVar("BUILD_CC")
+    try:
+        env = os.environ.copy()
+        env["PATH"] = d.getVar("PATH")
+        output = subprocess.check_output("%s --version" % compiler, shell=True, env=env).decode("utf-8")
+    except subprocess.CalledProcessError as e:
+        bb.fatal("Error running %s --version: %s" % (compiler, e.output.decode("utf-8")))
+
+    match = re.match(".* (\d\.\d)\.\d.*", output.split('\n')[0])
+    version = match.group(1)
+
+    from distutils.version import StrictVersion
+    if StrictVersion(version) < StrictVersion(MINIMUM_GCC):
+        bb.fatal("Host gcc version (%s) must be >= %s" % (version, MINIMUM_GCC))
+}
+
+do_configure[prefuncs] += "check_host_gcc"
+
+
 fix_makefiles () {
   for file in ${FILE_CHANGE_SA_TO_LINUX}; do
     if grep "gnu-sa-d" $file; then
