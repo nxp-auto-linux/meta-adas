@@ -1,4 +1,4 @@
-From 0a35e2d9ed463f5fe2ce113582116068882c77af Mon Sep 17 00:00:00 2001
+From 23732a1cb6d94d4e72780eddd87ca9de1b003172 Mon Sep 17 00:00:00 2001
 From: Catalin Udma <catalin-dan.udma@nxp.com>
 Date: Tue, 8 May 2018 10:30:05 +0300
 Subject: [PATCH 1/2] s32v234/dts: Add VSDK specific configuration
@@ -8,15 +8,15 @@ Signed-off-by: Ludovit Minarik <ludovit.minarik@nxp.com>
 Signed-off-by: Zdenek Valek <zdenek.valek@nxp.com>
 Signed-off-by: Catalin Udma <catalin-dan.udma@nxp.com>
 ---
- .../arm64/boot/dts/freescale/fsl-s32v234.dtsi | 87 +++++++++++++++++++
+ arch/arm64/boot/dts/freescale/fsl-s32v234.dtsi | 87 ++++++++++++++++++++++++++
  1 file changed, 87 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/freescale/fsl-s32v234.dtsi b/arch/arm64/boot/dts/freescale/fsl-s32v234.dtsi
-index b51aff929bf0..284de66eacc5 100644
+index 436ffd1..f4aa0b0 100644
 --- a/arch/arm64/boot/dts/freescale/fsl-s32v234.dtsi
 +++ b/arch/arm64/boot/dts/freescale/fsl-s32v234.dtsi
 @@ -124,6 +124,38 @@
- 			reg = <0x0 0xFD000000 0x0 0x400000>;    /* 4 MB */
+ 			reg = <0x0 0xC1000000 0x0 0x400000>;    /* 4 MB */
  			no-map;
  		};
 +
@@ -117,5 +117,5 @@ index b51aff929bf0..284de66eacc5 100644
  
  		aips1: aips-bus@40080000 {
 -- 
-2.21.0
+2.7.4
 
