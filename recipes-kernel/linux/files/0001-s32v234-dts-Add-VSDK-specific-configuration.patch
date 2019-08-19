@@ -1,18 +1,20 @@
-From 23732a1cb6d94d4e72780eddd87ca9de1b003172 Mon Sep 17 00:00:00 2001
-From: Catalin Udma <catalin-dan.udma@nxp.com>
-Date: Tue, 8 May 2018 10:30:05 +0300
-Subject: [PATCH 1/2] s32v234/dts: Add VSDK specific configuration
+From a90e73103ee397a8ea8e9979d02b85ddb868b529 Mon Sep 17 00:00:00 2001
+From: Mihail-Marian Nistor <mihail.nistor@nxp.com>
+Date: Tue, 20 Aug 2019 14:22:09 +0300
+Subject: [PATCH] s32v234/dts: Add VSDK specific configuration
 
 Signed-off-by: Rosta Hulik <rostislav.hulik@nxp.com>
 Signed-off-by: Ludovit Minarik <ludovit.minarik@nxp.com>
 Signed-off-by: Zdenek Valek <zdenek.valek@nxp.com>
 Signed-off-by: Catalin Udma <catalin-dan.udma@nxp.com>
+Signed-off-by: Mihail-Marian Nistor <mihail.nistor@nxp.com>
+Signed-off-by: Ciprian Costea <ciprianmarian.costea@nxp.com>
 ---
  arch/arm64/boot/dts/freescale/fsl-s32v234.dtsi | 87 ++++++++++++++++++++++++++
  1 file changed, 87 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/freescale/fsl-s32v234.dtsi b/arch/arm64/boot/dts/freescale/fsl-s32v234.dtsi
-index 436ffd1..f4aa0b0 100644
+index 436ffd1..3561ba8 100644
 --- a/arch/arm64/boot/dts/freescale/fsl-s32v234.dtsi
 +++ b/arch/arm64/boot/dts/freescale/fsl-s32v234.dtsi
 @@ -124,6 +124,38 @@
@@ -36,7 +38,7 @@ index 436ffd1..f4aa0b0 100644
 +		};
 +
 +		oalsramS_allocator_memory: oalsramS@0x3E800000 {
-+			reg = <0x0 0x3E800000 0x0 0x00300000>;  /* 3 MB */
++			reg = <0x0 0x3E801000 0x0 0x002FF000>;  /* 3 MB - 4KB*/
 +			no-map;
 +		};
 +
@@ -60,7 +62,7 @@ index 436ffd1..f4aa0b0 100644
  			};
 +
 +			oalmem0: oalmem0@8B000000 {
-+				compatible = "fsl,s32v234-oal";               // OAL ALLOCATOR DEVICE
++				compatible = "fsl,oal-mem-reg";               // OAL ALLOCATOR DEVICE
 +				reg = <0x0 0x8B000000 0x0 0x04D00000>;        // MEMORY RANGE
 +				memory-region = <&oalddr0_allocator_memory>;  // MEMORY REGION TO USE (RESERVED MEMORY)
 +				id = <0>;                                     // ID (FOR ALLOCATORY USE - MUST MATCH WITH MEM REGION ID)
@@ -69,7 +71,7 @@ index 436ffd1..f4aa0b0 100644
 +			};
 +
 +			oalmem1: oalmem1@CB000000 {
-+				compatible = "fsl,s32v234-oal";               // OAL ALLOCATOR DEVICE
++				compatible = "fsl,oal-mem-reg";               // OAL ALLOCATOR DEVICE
 +				reg = <0x0 0xCB000000 0x0 0x05000000>;        // MEMORY RANGE
 +				memory-region = <&oalddr1_allocator_memory>;  // MEMORY REGION TO USE (RESERVED MEMORY)
 +				id = <1>;                                     // ID (FOR ALLOCATORY USE - MUST MATCH WITH MEM REGION ID)
@@ -78,8 +80,8 @@ index 436ffd1..f4aa0b0 100644
 +			};
 +
 +			oalsramS: oalsramS@3E800000 {
-+				compatible = "fsl,s32v234-oal";
-+				reg = <0x0 0x3E800000 0x0 0x00300000>;
++				compatible = "fsl,oal-mem-reg";
++				reg = <0x0 0x3E801000 0x0 0x002FF000>;
 +				memory-region = <&oalsramS_allocator_memory>;
 +				id = <2>;
 +				align = <0x8>;
@@ -87,7 +89,7 @@ index 436ffd1..f4aa0b0 100644
 +			};
 +
 +			oalsramM: oalsramM@3EB00000 {
-+				compatible = "fsl,s32v234-oal";
++				compatible = "fsl,oal-mem-reg";
 +				reg = <0x0 0x3EB00000 0x0 0x00100000>;
 +				memory-region = <&oalsramM_allocator_memory>;
 +				id = <3>;
