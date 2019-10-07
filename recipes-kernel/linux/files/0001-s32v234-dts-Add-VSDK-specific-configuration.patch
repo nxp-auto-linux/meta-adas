@@ -27,13 +27,13 @@ index 436ffd1..3561ba8 100644
 +			no-map;
 +		};
 +
-+		oalddr0_allocator_memory: oalddr0@0x8B000000 {
-+			reg = <0x0 0x8B000000 0x0 0x04D00000>;  /* 77 MB */
++		oalddr0_allocator_memory: oalddr0@0x89000000 {
++			reg = <0x0 0x89000000 0x0 0x06D00000>;  /* 109 MB */
 +			no-map;
 +		};
 +
-+		oalddr1_allocator_memory: oalddr1@0xCB000000 {
-+			reg = <0x0 0xCB000000 0x0 0x05000000>;  /* 80 MB */
++		oalddr1_allocator_memory: oalddr1@0xC9000000 {
++			reg = <0x0 0xC9000000 0x0 0x07000000>;  /* 112 MB */
 +			no-map;
 +		};
 +
@@ -61,18 +61,18 @@ index 436ffd1..3561ba8 100644
  				status = "okay";
  			};
 +
-+			oalmem0: oalmem0@8B000000 {
++			oalmem0: oalmem0@89000000 {
 +				compatible = "fsl,oal-mem-reg";               // OAL ALLOCATOR DEVICE
-+				reg = <0x0 0x8B000000 0x0 0x04D00000>;        // MEMORY RANGE
++				reg = <0x0 0x89000000 0x0 0x06D00000>;        // MEMORY RANGE
 +				memory-region = <&oalddr0_allocator_memory>;  // MEMORY REGION TO USE (RESERVED MEMORY)
 +				id = <0>;                                     // ID (FOR ALLOCATORY USE - MUST MATCH WITH MEM REGION ID)
 +				align = <0x1000>;                             // DEFAULT ALIGNMENT
 +				autobalance;                                  // PRESENT IF AUTOBALANCE IS NEEDED (ONE AUTO BALANCE REGION)
 +			};
 +
-+			oalmem1: oalmem1@CB000000 {
++			oalmem1: oalmem1@C9000000 {
 +				compatible = "fsl,oal-mem-reg";               // OAL ALLOCATOR DEVICE
-+				reg = <0x0 0xCB000000 0x0 0x05000000>;        // MEMORY RANGE
++				reg = <0x0 0xC9000000 0x0 0x07000000>;        // MEMORY RANGE
 +				memory-region = <&oalddr1_allocator_memory>;  // MEMORY REGION TO USE (RESERVED MEMORY)
 +				id = <1>;                                     // ID (FOR ALLOCATORY USE - MUST MATCH WITH MEM REGION ID)
 +				align = <0x1000>;                             // DEFAULT ALIGNMENT
@@ -120,4 +120,3 @@ index 436ffd1..3561ba8 100644
  		aips1: aips-bus@40080000 {
 -- 
 2.7.4
-
