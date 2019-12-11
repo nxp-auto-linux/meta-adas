@@ -28,7 +28,18 @@ APU_OPT = "${@d.getVar('APU_OPT_NXP', True) if d.getVar('APU_COMPILER_NXP', True
 	 else d.getVar('APU_OPT_TCT', True) if d.getVar('APU_COMPILER_TCT', True) \
 	 else d.getVar('APU_OPT_DEFAULT', True)}"
 
-EXTRA_OEMAKE = "${APU_OPT} allsub V=1 "
+# In a typical project the developer will use vanilla VisionSDK libraries,
+# e.g. System Libraries, without any changes as provided by the VisionSDK installer.
+# The re-build of System Libraries can be enforced using the PRE_BUILT_SYSTEM_LIBS
+# variable in conf/local.conf:
+#   * PRE_BUILT_SYSTEM_LIBS=0 rebuild System Libraries
+#   * PRE_BUILT_SYSTEM_LIBS=1 use pre-built System Libraries (default)
+USE_CUSTOME_SYSTEM_LIBS = "PRE_BUILT_SYSTEM_LIBS=${PRE_BUILT_SYSTEM_LIBS}"
+USE_DEFALT_SYSTEM_LIBS = " "
+USE_SYSTEM_LIBS = "${@d.getVar('USE_CUSTOME_SYSTEM_LIBS', True) if d.getVar('PRE_BUILT_SYSTEM_LIBS', True) \
+         else d.getVar('USE_DEFALT_SYSTEM_LIBS', True)}"
+
+EXTRA_OEMAKE = "${APU_OPT} ${USE_SYSTEM_LIBS} V=1"
 
 EXTRA_OEMAKE += "CROSS_COMPILE="${TARGET_PREFIX}""
 EXTRA_OEMAKE += "CROSS_COMPILE_SYSROOT=--sysroot=\"${STAGING_DIR_TARGET}\""
@@ -61,44 +72,44 @@ python check_host_gcc() {
 
 do_configure[prefuncs] += "check_host_gcc"
 
-
 fix_makefiles () {
-  for file in ${FILE_CHANGE_SA_TO_LINUX}; do
-    if grep "gnu-sa-d" $file; then
-      sed -i -e 's/gnu-sa-d/gnu-linux-d/g' $file
-    fi
-  done
-}
-
-fix_arm_define () {
-  file="${EXTERNALSRC}/build/nbuild/toolchains/aarch64-linux-gnu.mk"
-  if grep "D__arm__" $file; then
-    sed -i -e 's/-D__arm__/ /g' $file
+  file="${EXTERNALSRC}/3rdparty/oal/build/LinuxApplication.mk"
+  if grep "CC  = \$(CROSS_COMPILE)gcc" $file; then
+    sed -i -e 's/CC  = \$(CROSS_COMPILE)gcc/CC =  \$(CROSS_COMPILE)gcc \$(CROSS_COMPILE_SYSROOT)/g' $file
+  fi
+  if grep "CXX = \$(CROSS_COMPILE)g++" $file; then
+    sed -i -e 's/CXX = \$(CROSS_COMPILE)g++/CXX =  \$(CROSS_COMPILE)g++ \$(CROSS_COMPILE_SYSROOT)/g' $file
   fi
 }
 
-
 do_configure_prepend() {
-  fix_makefiles
-  fix_arm_define
+ fix_makefiles
 }
 
 do_compile_prepend() {
   fix_makefiles
-  fix_arm_define
 }
 
 do_install() {
 	mkdir -p "${INSTALL_DIR}"
-	cp *.elf "${INSTALL_DIR}/"
+	cp ${EXTERNALSRC_BUILD}/*.elf "${INSTALL_DIR}/"
 }
 
+do_compile[lockfiles] = "${TMPDIR}/demos-scripts.lock"
+
+do_compile () {
+        (unset BUILDDIR; make -C ${EXTERNALSRC_BUILD} ${EXTRA_OEMAKE} allsub)
+}
+
+oe_runmake_call() {
+        bbnote "unset BUILDDIR ${MAKE} ${EXTRA_OEMAKE} " "$@"
+        (unset BUILDDIR; ${MAKE} ${EXTRA_OEMAKE} "$@")
+}
 
 do_clean[postfuncs] += "do_clean_local"
 
 do_clean_local () {
-	cd ${EXTERNALSRC_BUILD}
-	make ${APU_OPT} cleansub
+	(unset BUILDDIR; make -C ${EXTERNALSRC_BUILD} ${APU_OPT} ${USE_SYSTEM_LIBS} cleansub)
 }
 
 FILES_${PN} += "${VSDK_OUTPUT_DIR_NAME}"

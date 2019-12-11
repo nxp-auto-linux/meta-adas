@@ -8,3 +8,4 @@ require recipes-fsl/images/${VSDK_IMAGE_BASE}
 
 # Add vsdk
 IMAGE_INSTALL +=  "packagegroup-fsl-adas-vsdk"
+IMAGE_INSTALL += "sm-drv"

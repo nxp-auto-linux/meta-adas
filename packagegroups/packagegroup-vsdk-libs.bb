@@ -8,7 +8,7 @@ PROVIDES = "packagegroup-vsdk-libs"
 RDEPENDS_packagegroup-vsdk-libs = "\
 	apex-drivers \
 	cam-generic \
-	oal \
+	oal-driver \
 	jpegdec \
 	viu \
 	fdma \

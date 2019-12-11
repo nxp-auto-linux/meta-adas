@@ -1,11 +1,6 @@
 PROVIDES += "fftw"
 FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
 
-# it actually depends on oal/user, but there is no individual oal/user recipe
-# apex-add will build the oal/user dependency
-DEPENDS += "apex-add"
-
-
 # We need to use a basic filepath here
 LOCAL_MIRROR_PATH = "${@d.getVar('FSL_LOCAL_MIRROR', 1).replace('file://','')}"
 
@@ -22,8 +17,7 @@ SRC_URI += "file://fftw_3_4_4.patch"
 
 
 ARM_INCS="-I${VSDK_LAYOUT_PATH}/include"
-ARM_LIBS_PATH="-L${VSDK_LAYOUT_PATH}/libs/utils/oal/user/build-v234ce-gnu-linux-d"
-LIBS="-loal -lc -lg -lgcc -lstdc++"
+LIBS="-lc -lg -lgcc -lstdc++"
 
 PREFIX="--prefix=${INSTALL_DIR} --host=${TARGET_SYS} --enable-single --enable-neon"
 PREFIX2="-mcpu=cortex-a53 -nostdlib -fno-builtin -fno-exceptions"

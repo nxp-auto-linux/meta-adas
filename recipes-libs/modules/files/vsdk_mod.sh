@@ -8,11 +8,11 @@
 # Short-Description: Loading VSDK modules
 # Description:       Inserts VSDK kernel modules.
 ### END INIT INFO
-# Copyright 2018 NXP
+# Copyright 2018-2019 NXP
 
 
 insmod VSDK_OUTPUT_DIR_NAME/apex.ko
-insmod VSDK_OUTPUT_DIR_NAME/oal_cma.ko
+insmod VSDK_OUTPUT_DIR_NAME/oal_driver.ko
 insmod VSDK_OUTPUT_DIR_NAME/csi.ko
 insmod VSDK_OUTPUT_DIR_NAME/cam.ko
 insmod VSDK_OUTPUT_DIR_NAME/seq.ko
