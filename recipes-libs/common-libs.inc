@@ -29,12 +29,12 @@ INSTALL_DIR = "${D}${VSDK_OUTPUT_DIR_NAME}"
 
 do_install() {
 	install -d "${INSTALL_DIR}/"
- 	install -m 0644 ${KO_MODULE_NAME}.ko "${INSTALL_DIR}/"
+	install -m 0644 ${KO_MODULE_NAME}.ko "${INSTALL_DIR}/"
 }
 
 oe_runmake_call() {
-        bbnote "unset BUILDDIR; ${MAKE} ${EXTRA_OEMAKE} " "$@"
-        (unset BUILDDIR; ${MAKE} ${EXTRA_OEMAKE} "$@")
+	bbnote "unset BUILDDIR; ${MAKE} ${EXTRA_OEMAKE} " "$@"
+	(unset BUILDDIR; ${MAKE} ${EXTRA_OEMAKE} "$@")
 }
 
 # Insert VSDK modules in a specific order as handled by vsdk-mod-order module

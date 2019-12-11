@@ -33,12 +33,12 @@ INSTALL_DIR = "${D}${VSDK_OUTPUT_DIR_NAME}"
 
 do_install() {
 	install -d "${INSTALL_DIR}/"
-        install -m 0644 ${EXTERNALSRC}/3rdparty/oal/libs/kernel/driver/build-linux-kernel/build-v234ce-gnu-linux-d/oal_driver.ko "${INSTALL_DIR}/"
+	install -m 0644 ${EXTERNALSRC}/3rdparty/oal/libs/kernel/driver/build-linux-kernel/build-v234ce-gnu-linux-d/oal_driver.ko "${INSTALL_DIR}/"
 }
 
 oe_runmake_call() {
-        bbnote "unset BUILDDIR; OAL_BUILD_CONFIG=debug CDEFS='-DOAL_LOG_SUPPRESS_NOTE -DOAL_LOG_SUPPRESS_DEBUG -DOAL_LOG_SUPPRESS_WARNING -DOAL_LOG_SUPPRESS_ERROR' ${MAKE} ${EXTRA_OEMAKE} " "$@"
-        (unset BUILDDIR; OAL_BUILD_CONFIG=debug CDEFS='-DOAL_LOG_SUPPRESS_NOTE -DOAL_LOG_SUPPRESS_DEBUG -DOAL_LOG_SUPPRESS_WARNING -DOAL_LOG_SUPPRESS_ERROR' ${MAKE} ${EXTRA_OEMAKE} "$@")
+	bbnote "unset BUILDDIR; OAL_BUILD_CONFIG=debug CDEFS='-DOAL_LOG_SUPPRESS_NOTE -DOAL_LOG_SUPPRESS_DEBUG -DOAL_LOG_SUPPRESS_WARNING -DOAL_LOG_SUPPRESS_ERROR' ${MAKE} ${EXTRA_OEMAKE} " "$@"
+	(unset BUILDDIR; OAL_BUILD_CONFIG=debug CDEFS='-DOAL_LOG_SUPPRESS_NOTE -DOAL_LOG_SUPPRESS_DEBUG -DOAL_LOG_SUPPRESS_WARNING -DOAL_LOG_SUPPRESS_ERROR' ${MAKE} ${EXTRA_OEMAKE} "$@")
 }
 
 # Insert VSDK modules in a specific order as handled by vsdk-mod-order module
