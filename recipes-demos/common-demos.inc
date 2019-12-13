@@ -29,13 +29,15 @@ APU_OPT = "${@d.getVar('APU_OPT_NXP', True) if d.getVar('APU_COMPILER_NXP', True
 	 else d.getVar('APU_OPT_DEFAULT', True)}"
 
 # In a typical project the developer will use vanilla VisionSDK libraries,
-# e.g. System Libraries, without any changes as provided by the VisionSDK installer.
+# e.g. System Libraries, without any changes as provided by the VisionSDK installer,
+# but Yocto should build everything from scratch, so we change the default behavior
+# to re-build System Libraries.
 # The re-build of System Libraries can be enforced using the PRE_BUILT_SYSTEM_LIBS
 # variable in conf/local.conf:
-#   * PRE_BUILT_SYSTEM_LIBS=0 rebuild System Libraries
-#   * PRE_BUILT_SYSTEM_LIBS=1 use pre-built System Libraries (default)
+#   * PRE_BUILT_SYSTEM_LIBS=0 rebuild System Libraries (default)
+#   * PRE_BUILT_SYSTEM_LIBS=1 use pre-built System Libraries
 USE_CUSTOME_SYSTEM_LIBS = "PRE_BUILT_SYSTEM_LIBS=${PRE_BUILT_SYSTEM_LIBS}"
-USE_DEFALT_SYSTEM_LIBS = " "
+USE_DEFALT_SYSTEM_LIBS = "PRE_BUILT_SYSTEM_LIBS=0"
 USE_SYSTEM_LIBS = "${@d.getVar('USE_CUSTOME_SYSTEM_LIBS', True) if d.getVar('PRE_BUILT_SYSTEM_LIBS', True) \
          else d.getVar('USE_DEFALT_SYSTEM_LIBS', True)}"
 
