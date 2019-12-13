@@ -41,6 +41,12 @@ oe_runmake_call() {
 	(unset BUILDDIR; OAL_BUILD_CONFIG=debug CDEFS='-DOAL_LOG_SUPPRESS_NOTE -DOAL_LOG_SUPPRESS_DEBUG -DOAL_LOG_SUPPRESS_WARNING -DOAL_LOG_SUPPRESS_ERROR' ${MAKE} ${EXTRA_OEMAKE} "$@")
 }
 
+do_clean[postfuncs] += "do_clean_local"
+
+do_clean_local () {
+        (unset BUILDDIR; make -C ${EXTERNALSRC_BUILD} ${EXTRA_OEMAKE} clean)
+}
+
 # Insert VSDK modules in a specific order as handled by vsdk-mod-order module
 RDEPENDS_${PN} += "vsdk-mod-order"
 

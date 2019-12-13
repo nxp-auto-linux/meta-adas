@@ -37,6 +37,12 @@ oe_runmake_call() {
 	(unset BUILDDIR; ${MAKE} ${EXTRA_OEMAKE} "$@")
 }
 
+do_clean[postfuncs] += "do_clean_local"
+
+do_clean_local () {
+	(unset BUILDDIR; make -C ${EXTERNALSRC_BUILD} ${EXTRA_OEMAKE} clean)
+}
+
 # Insert VSDK modules in a specific order as handled by vsdk-mod-order module
 RDEPENDS_${PN} += "vsdk-mod-order"
 
