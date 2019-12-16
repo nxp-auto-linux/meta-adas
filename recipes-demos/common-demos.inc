@@ -77,10 +77,10 @@ do_configure[prefuncs] += "check_host_gcc"
 fix_makefiles () {
   file="${EXTERNALSRC}/3rdparty/oal/build/LinuxApplication.mk"
   if grep "CC  = \$(CROSS_COMPILE)gcc" $file; then
-    sed -i -e 's/CC  = \$(CROSS_COMPILE)gcc/CC =  \$(CROSS_COMPILE)gcc \$(CROSS_COMPILE_SYSROOT)/g' $file
+    sed -i -e 's/CC  = \$(CROSS_COMPILE)gcc/CC  ?= \$(CROSS_COMPILE)gcc/g' $file
   fi
   if grep "CXX = \$(CROSS_COMPILE)g++" $file; then
-    sed -i -e 's/CXX = \$(CROSS_COMPILE)g++/CXX =  \$(CROSS_COMPILE)g++ \$(CROSS_COMPILE_SYSROOT)/g' $file
+    sed -i -e 's/CXX = \$(CROSS_COMPILE)g++/CXX ?= \$(CROSS_COMPILE)g++/g' $file
   fi
 }
 
