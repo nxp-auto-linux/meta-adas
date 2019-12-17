@@ -21,10 +21,9 @@ RPROVIDES_${PN} += "kernel-module-${@d.getVar('KO_MODULE_NAME', 1).replace('_','
 SOURCES_PATH = "${@d.getVar('FSL_LOCAL_MIRROR', 1).replace('file://','')}"
 EXTERNALSRC := "${SOURCES_PATH}/s32v234_sdk"
 EXTERNALSRC_BUILD := "${EXTERNALSRC}/3rdparty/oal"
-EXTRA_OEMAKE = "LINUX_S32V234_DIR=${KBUILD_OUTPUT} \
-  KERNEL_DIR=${KBUILD_OUTPUT} \
+EXTRA_OEMAKE = "KERNEL_DIR=${KBUILD_OUTPUT} \
   OBJDIR=build-v234ce-gnu-linux-d \
-  CROSS_COMPILE=aarch64-fsl-linux- ARCH=arm64 V=1 \
+  CROSS_COMPILE="${TARGET_PREFIX}" ARCH=arm64 V=1 \
   FILTER=%linux-kernel/"
 
 # Make sure kernel modules are packaged unstripped

@@ -22,6 +22,7 @@ SOURCES_PATH = "${@d.getVar('FSL_LOCAL_MIRROR', 1).replace('file://','')}"
 EXTERNALSRC := "${SOURCES_PATH}/s32v234_sdk"
 
 EXTRA_OEMAKE = "LINUX_S32V234_DIR=${KBUILD_OUTPUT} V=1"
+EXTRA_OEMAKE += "CROSS_COMPILE="${TARGET_PREFIX}""
 
 # Make sure kernel modules are packaged unstripped
 INHIBIT_PACKAGE_STRIP = "1"
