@@ -74,24 +74,6 @@ python check_host_gcc() {
 
 do_configure[prefuncs] += "check_host_gcc"
 
-fix_makefiles () {
-  file="${EXTERNALSRC}/3rdparty/oal/build/LinuxApplication.mk"
-  if grep "CC  = \$(CROSS_COMPILE)gcc" $file; then
-    sed -i -e 's/CC  = \$(CROSS_COMPILE)gcc/CC  ?= \$(CROSS_COMPILE)gcc/g' $file
-  fi
-  if grep "CXX = \$(CROSS_COMPILE)g++" $file; then
-    sed -i -e 's/CXX = \$(CROSS_COMPILE)g++/CXX ?= \$(CROSS_COMPILE)g++/g' $file
-  fi
-}
-
-do_configure_prepend() {
- fix_makefiles
-}
-
-do_compile_prepend() {
-  fix_makefiles
-}
-
 do_install() {
 	mkdir -p "${INSTALL_DIR}"
 	cp ${EXTERNALSRC_BUILD}/*.elf "${INSTALL_DIR}/"
@@ -100,18 +82,13 @@ do_install() {
 do_compile[lockfiles] = "${TMPDIR}/demos-scripts.lock"
 
 do_compile () {
-        (unset BUILDDIR; make -C ${EXTERNALSRC_BUILD} ${EXTRA_OEMAKE} allsub)
-}
-
-oe_runmake_call() {
-        bbnote "unset BUILDDIR ${MAKE} ${EXTRA_OEMAKE} " "$@"
-        (unset BUILDDIR; ${MAKE} ${EXTRA_OEMAKE} "$@")
+        make -C ${EXTERNALSRC_BUILD} ${EXTRA_OEMAKE} allsub
 }
 
 do_clean[postfuncs] += "do_clean_local"
 
 do_clean_local () {
-	(unset BUILDDIR; make -C ${EXTERNALSRC_BUILD} ${APU_OPT} ${USE_SYSTEM_LIBS} cleansub)
+	make -C ${EXTERNALSRC_BUILD} ${APU_OPT} ${USE_SYSTEM_LIBS} cleansub
 }
 
 FILES_${PN} += "${VSDK_OUTPUT_DIR_NAME}"

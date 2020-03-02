@@ -7,6 +7,7 @@ EXTERNALSRC_BUILD := "${EXTERNALSRC}/3rdparty/oal"
 EXTRA_OEMAKE += "KERNEL_DIR=${KBUILD_OUTPUT} \
   OBJDIR=build-v234ce-gnu-linux-d \
   ARCH=arm64 \
+  OAL_BUILD_CONFIG=debug CDEFS='-DOAL_LOG_SUPPRESS_NOTE -DOAL_LOG_SUPPRESS_DEBUG -DOAL_LOG_SUPPRESS_WARNING -DOAL_LOG_SUPPRESS_ERROR' \
   FILTER=%linux-kernel/"
 
 do_install() {
@@ -14,13 +15,8 @@ do_install() {
 	install -m 0644 ${EXTERNALSRC}/3rdparty/oal/libs/kernel/driver/build-linux-kernel/build-v234ce-gnu-linux-d/oal_driver.ko "${INSTALL_DIR}/"
 }
 
-oe_runmake_call() {
-	bbnote "unset BUILDDIR; OAL_BUILD_CONFIG=debug CDEFS='-DOAL_LOG_SUPPRESS_NOTE -DOAL_LOG_SUPPRESS_DEBUG -DOAL_LOG_SUPPRESS_WARNING -DOAL_LOG_SUPPRESS_ERROR' ${MAKE} ${EXTRA_OEMAKE} " "$@"
-	(unset BUILDDIR; OAL_BUILD_CONFIG=debug CDEFS='-DOAL_LOG_SUPPRESS_NOTE -DOAL_LOG_SUPPRESS_DEBUG -DOAL_LOG_SUPPRESS_WARNING -DOAL_LOG_SUPPRESS_ERROR' ${MAKE} ${EXTRA_OEMAKE} "$@")
-}
-
 do_clean[postfuncs] += "do_clean_local"
 
 do_clean_local () {
-        (unset BUILDDIR; make -C ${EXTERNALSRC_BUILD} ${EXTRA_OEMAKE} clean)
+        make -C ${EXTERNALSRC_BUILD} ${EXTRA_OEMAKE} clean
 }
