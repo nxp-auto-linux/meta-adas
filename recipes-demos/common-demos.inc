@@ -39,7 +39,7 @@ APU_OPT = "${@d.getVar('APU_OPT_NXP', True) if d.getVar('APU_COMPILER_NXP', True
 USE_CUSTOME_SYSTEM_LIBS = "PRE_BUILT_SYSTEM_LIBS=${PRE_BUILT_SYSTEM_LIBS}"
 USE_DEFALT_SYSTEM_LIBS = "PRE_BUILT_SYSTEM_LIBS=0"
 USE_SYSTEM_LIBS = "${@d.getVar('USE_CUSTOME_SYSTEM_LIBS', True) if d.getVar('PRE_BUILT_SYSTEM_LIBS', True) \
-         else d.getVar('USE_DEFALT_SYSTEM_LIBS', True)}"
+	else d.getVar('USE_DEFALT_SYSTEM_LIBS', True)}"
 
 EXTRA_OEMAKE = "${APU_OPT} ${USE_SYSTEM_LIBS} V=1"
 
@@ -82,7 +82,7 @@ do_install() {
 do_compile[lockfiles] = "${TMPDIR}/demos-scripts.lock"
 
 do_compile () {
-        make -C ${EXTERNALSRC_BUILD} ${EXTRA_OEMAKE} allsub
+	make -C ${EXTERNALSRC_BUILD} ${EXTRA_OEMAKE} allsub
 }
 
 do_clean[postfuncs] += "do_clean_local"

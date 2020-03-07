@@ -18,5 +18,5 @@ do_install() {
 do_clean[postfuncs] += "do_clean_local"
 
 do_clean_local () {
-        make -C ${EXTERNALSRC_BUILD} ${EXTRA_OEMAKE} clean
+	make -C ${EXTERNALSRC_BUILD} ${EXTRA_OEMAKE} clean
 }
