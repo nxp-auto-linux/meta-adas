@@ -1,0 +1,861 @@
+From 08b1073dc6ee97cd570549db6eff9ae13890af18 Mon Sep 17 00:00:00 2001
+From: Tran Duy Phuong <phuong.duy.tran@nxp.com>
+Date: Thu, 2 Apr 2020 18:20:39 +0700
+Subject: [PATCH] [cse3] update cse to run IAK commands
+
+	LOAD SEC RAM COMMAND
+	LOAD PLAINKEY IAK
+	EXPORT RAM KEY IAK
+	OPEN SEC RAM
+	update auto create device file
+
+Signed-off-by: Tran Duy Phuong <phuong.duy.tran@nxp.com>
+Signed-off-by: Mihail-Marian Nistor <mihail.nistor@nxp.com>
+---
+ drivers/crypto/cse/cse3.h      | 120 +++++++++--------
+ drivers/crypto/cse/cse3_core.c |  40 +++++-
+ drivers/crypto/cse/cse3_hw.c   |  68 ++++++++++
+ drivers/crypto/cse/cse3_hw.h   |   4 +
+ drivers/crypto/cse/cse3_req.c  | 283 +++++++++++++++++++++++++++++++++++++++++
+ drivers/crypto/cse/cse3_req.h  |   7 +
+ include/linux/fsl/cse3_ioctl.h |  41 ++++++
+ 7 files changed, 509 insertions(+), 54 deletions(-)
+
+diff --git a/drivers/crypto/cse/cse3.h b/drivers/crypto/cse/cse3.h
+index f0d1c65..16099f6 100644
+--- a/drivers/crypto/cse/cse3.h
++++ b/drivers/crypto/cse/cse3.h
+@@ -2,6 +2,7 @@
+  * Freescale Cryptographic Services Engine (CSE3) Device Driver
+  *
+  * Copyright (c) 2015-2016 Freescale Semiconductor, Inc.
++ * Copyright 2020 NXP
+  *
+  * This program is free software; you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License version 2 or
+@@ -39,6 +40,7 @@
+ #define M3_KEY_SIZE     16
+ #define M4_KEY_SIZE     32
+ #define M5_KEY_SIZE     16
++#define FULL_KRAM_SIZE  16384
+ #define BUFFER_SIZE     4096
+ #define CSE_QUEUE_LEN   4
+ 
+@@ -80,16 +82,19 @@
+  * HW context - must be allocated as non-cacheable and physically contiguous
+  */
+ typedef struct cse_descriptor {
+-	uint8_t aes_key[AES_KEY_SIZE];
+-	uint8_t aes_iv[AES_KEY_SIZE];
+-	uint8_t rval[RND_VAL_SIZE];
+-	uint8_t mac[AES_MAC_SIZE];
+-	uint8_t mp[MP_COMP_SIZE];
+-	uint8_t m1[M1_KEY_SIZE];
+-	uint8_t m2[M2_KEY_SIZE];
+-	uint8_t m3[M3_KEY_SIZE];
+-	uint8_t m4[M4_KEY_SIZE];
+-	uint8_t m5[M5_KEY_SIZE];
++	uint8_t  aes_key[AES_KEY_SIZE];
++	uint8_t  aes_iv[AES_KEY_SIZE];
++	uint8_t  rval[RND_VAL_SIZE];
++	uint8_t  mac[AES_MAC_SIZE];
++	uint8_t  mp[MP_COMP_SIZE];
++	uint8_t  m1[M1_KEY_SIZE];
++	uint8_t  m2[M2_KEY_SIZE];
++	uint8_t  m3[M3_KEY_SIZE];
++	uint8_t  m4[M4_KEY_SIZE];
++	uint8_t  m5[M5_KEY_SIZE];
++	uint8_t  p3_key_flags;
++	uint32_t p4_key_flags;
++	uint32_t secure_counter;
+ 	uint64_t nbits;
+ } cse_desc_t;
+ 
+@@ -194,47 +199,60 @@ static inline void set_canceled(uint8_t *state)
+  * Request flags
+  * [cbc:1,wk:1,alg:16,kbs:1,other:13]
+  */
+-#define FLAG_CBC			(0x1UL)
+-#define FLAG_WITH_KEY		(0x2UL)
+-#define ALG_MASK			(0x3FCUL)
+-#define FLAG_RND			(0x4UL)
+-#define FLAG_ENC			(0x8UL)
+-#define FLAG_DEC			(0x10UL)
+-#define FLAG_GEN_MAC		(0x20UL)
+-#define FLAG_VER_MAC		(0x40UL)
+-#define FLAG_LOAD_KEY		(0x80UL)
+-#define FLAG_LOAD_PLKEY		(0x100UL)
+-#define FLAG_MP_COMP		(0x200UL)
+-#define FLAG_KBS			(0x400UL)
+-
+-#define CSE_CR_CIE			(0x01UL)
+-#define CSE_CR_KBS			(0x20UL)
+-#define CSE_IR_CIF			(0x01UL)
+-
+-#define CSE_CMD_SECURE_BOOT			(0xDUL)
+-#define CSE_CMD_INIT_CSE			(0x15UL)
+-#define CSE_CMD_PUBLISH_KEY_IMG		(0x17UL)
+-#define CSE_CMD_INIT_RNG			(0x0AUL)
+-
+-#define CSE_CMD_ENC_ECB				(0x01UL)
+-#define CSE_CMD_ENC_CBC				(0x02UL)
+-#define CSE_CMD_DEC_ECB				(0x03UL)
+-#define CSE_CMD_DEC_CBC				(0x04UL)
+-#define CSE_CMD_GEN_MAC				(0x05UL)
+-#define CSE_CMD_VER_MAC				(0x06UL)
+-#define CSE_CMD_LOAD_KEY			(0x07UL)
+-#define CSE_CMD_LOAD_PLAIN_KEY		(0x08UL)
+-#define CSE_CMD_CANCEL				(0x11UL)
+-#define CSE_CMD_RND					(0x0CUL)
+-#define CSE_CMD_COMPRESS_MP			(0x16UL)
+-
+-#define CSE_SR_BSY					(0x1UL)
+-#define CSE_SR_BOK					(0x10UL)
+-
+-#define MIN_KEY_ID		0x0
+-#define MAX_KEY_ID		0xE
+-#define CSE_KEYID_RAM	0xE
+-#define UNDEFINED		-1
++#define FLAG_CBC                        (0x1UL)
++#define FLAG_WITH_KEY                   (0x2UL)
++#define ALG_MASK                        (0x7BFCUL)
++#define FLAG_RND                        (0x4UL)
++#define FLAG_ENC                        (0x8UL)
++#define FLAG_DEC                        (0x10UL)
++#define FLAG_GEN_MAC                    (0x20UL)
++#define FLAG_VER_MAC                    (0x40UL)
++#define FLAG_LOAD_KEY                   (0x80UL)
++#define FLAG_LOAD_PLKEY                 (0x100UL)
++#define FLAG_MP_COMP                    (0x200UL)
++#define FLAG_KBS                        (0x400UL)
++#define FLAG_LOAD_SEC_RAM               (0x800UL)
++#define FLAG_LOAD_PLKEY_IAK             (0x1000UL)
++#define FLAG_EXPORT_RAM_IAK             (0x2000UL)
++#define FLAG_OPEN_SEC_RAM               (0x4000UL)
++
++#define CSE_CR_CIE                      (0x01UL)
++#define CSE_CR_KBS                      (0x20UL)
++#define CSE_IR_CIF                      (0x01UL)
++
++#define CSE_CMD_SECURE_BOOT             (0xDUL)
++#define CSE_CMD_INIT_CSE                (0x15UL)
++#define CSE_CMD_PUBLISH_KEY_IMG         (0x17UL)
++#define CSE_CMD_INIT_RNG                (0x0AUL)
++
++#define CSE_CMD_ENC_ECB                 (0x01UL)
++#define CSE_CMD_ENC_CBC                 (0x02UL)
++#define CSE_CMD_DEC_ECB                 (0x03UL)
++#define CSE_CMD_DEC_CBC                 (0x04UL)
++#define CSE_CMD_GEN_MAC                 (0x05UL)
++#define CSE_CMD_VER_MAC                 (0x06UL)
++#define CSE_CMD_LOAD_KEY                (0x07UL)
++#define CSE_CMD_LOAD_PLAIN_KEY          (0x08UL)
++#define CSE_CMD_CANCEL                  (0x11UL)
++#define CSE_CMD_RND                     (0x0CUL)
++#define CSE_CMD_COMPRESS_MP             (0x16UL)
++#define CSE_CMD_LOAD_SEC_RAM            (0x18UL)
++#define CSE_CMD_OPEN_SEC_RAM            (0x19UL)
++#define CSE_CMD_EXPORT_SEC_RAM          (0x1AUL)
++#define CSE_CMD_LOAD_PLAIN_KEY_IAK      (0x1CUL)
++#define CSE_CMD_EXPORT_RAM_IAK          (0x1DUL)
++
++#define CSE_SR_BSY                      (0x1UL)
++#define CSE_SR_BOK                      (0x10UL)
++
++#define MIN_KEY_ID                      0x0
++#define MAX_KEY_ID                      0xE
++#define CSE_KEYID_SECRET                0x0
++#define CSE_KEYID_MASTER_ECU            0x1
++#define CSE_KEYID_MAC                   0x2
++#define CSE_KEYID_BOOT_MAC              0x3
++#define CSE_KEYID_RAM                   0xE
++#define UNDEFINED                       -1
+ 
+ static inline int cse_allocate_buffer(struct device *dev, void **buf,
+ 		dma_addr_t *hw_buf, size_t size, enum dma_data_direction dir)
+diff --git a/drivers/crypto/cse/cse3_core.c b/drivers/crypto/cse/cse3_core.c
+index c0349fd..3ab7d6d 100644
+--- a/drivers/crypto/cse/cse3_core.c
++++ b/drivers/crypto/cse/cse3_core.c
+@@ -2,6 +2,7 @@
+  * Freescale Cryptographic Services Engine (CSE3) Device Driver
+  *
+  * Copyright (c) 2015-2016 Freescale Semiconductor, Inc.
++ * Copyright 2020 NXP
+  *
+  * This program is free software; you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License version 2 or
+@@ -20,6 +21,7 @@
+ #include <linux/slab.h>
+ #include <linux/of.h>
+ #include <linux/io.h>
++#include <linux/device.h>
+ 
+ #include "cse3.h"
+ #include "cse3_req.h"
+@@ -36,7 +38,7 @@
+ #define CSE3_NAME		"cse3"
+ 
+ struct cse_device_data *cse_dev_ptr;
+-
++static struct class    *cse_class;
+ static char *errmsg[35] = {
+ 	"", /* padding */
+ 	"", /* padding */
+@@ -119,6 +121,7 @@ int cse_handle_request(struct cse_device_data *dev, cse_req_t *req)
+ 	/* Enqueue current request */
+ 	if (req) {
+ 		ret = cse_enqueue_request(&dev->queue, req);
++
+ 		if (ret) {
+ 			spin_unlock_bh(&dev->lock);
+ 			return ret;
+@@ -131,6 +134,7 @@ int cse_handle_request(struct cse_device_data *dev, cse_req_t *req)
+ 		return ret;
+ 	}
+ 	nextReq = cse_dequeue_request(&dev->queue);
++
+ 	if (nextReq) {
+ 		dev->req = nextReq;
+ 		set_state(&nextReq->state, FLAG_SUBMITTED);
+@@ -301,7 +305,18 @@ static long cse_cdev_ioctl(struct file *file, unsigned int cmd,
+ 		if (remains)
+ 			ret = -EFAULT;
+ 		break;
+-
++	case CSE3_IOCTL_LOAD_SEC_RAM:
++		ret = cse_ioctl_load_sec_ram(ctx, cmd, arg);
++		break;
++	case CSE3_IOCTL_LOAD_PLKEY_IAK:
++		ret = cse_ioctl_load_plkey_iak(ctx, cmd, arg);
++		break;
++	case CSE3_IOCTL_EXPORT_RAM_IAK:
++		ret = cse_ioctl_export_ram_iak(ctx, cmd, arg);
++		break;
++	case CSE3_IOCTL_OPEN_SECRAM:
++		ret = cse_ioctl_open_sec_ram(ctx, cmd, arg);
++		break;
+ 	default:
+ 		ret = -EINVAL;
+ 	}
+@@ -355,7 +370,6 @@ static irqreturn_t cse_irq_handler(int irq_no, void *dev_id)
+ 	uint32_t status = readl(&cse_dev->base->cse_sr);
+ 	uint32_t error = readl(&cse_dev->base->cse_ecr);
+ 	uint32_t ctrl = readl(&cse_dev->base->cse_cr);
+-
+ 	/* Check status */
+ 	if (status & CSE_SR_BSY || !cse_dev->req) {
+ 		return IRQ_NONE;
+@@ -399,6 +413,7 @@ static int cse_probe(struct platform_device *pdev)
+ 	int err = 0;
+ 	struct cse_device_data *cse_dev;
+ 	struct resource *res;
++	struct device *cse_device = NULL;
+ 
+ 	/** Allocate device data */
+ 	cse_dev = devm_kzalloc(&pdev->dev, sizeof(struct cse_device_data),
+@@ -465,6 +480,19 @@ static int cse_probe(struct platform_device *pdev)
+ 		goto out_dev;
+ 	}
+ 
++	cse_class = class_create(THIS_MODULE, "csedrv");
++	if (cse_class == NULL) {
++		dev_err(&pdev->dev, "failed to create class device for cse.\n");
++		goto out_class;
++	}
++
++	cse_device = device_create(cse_class, NULL,
++			MKDEV(CSE3_MAJOR, CSE3_MINOR), NULL, CSE3_NAME);
++	if (cse_device == NULL) {
++		dev_err(&pdev->dev, "device_create cse failed\n");
++		goto out_devcreate;
++	}
++
+ 	cse_dev->flags = 0;
+ 	cdev_init(&cse_dev->cdev, &cse_fops);
+ 	cdev_add(&cse_dev->cdev, MKDEV(CSE3_MAJOR, 0), 1);
+@@ -474,6 +502,10 @@ static int cse_probe(struct platform_device *pdev)
+ 
+ 	return 0;
+ 
++out_devcreate:
++	class_destroy(cse_class);
++out_class:
++	unregister_chrdev_region(MKDEV(CSE3_MAJOR, CSE3_MINOR), NUM_MINORS);
+ out_dev:
+ 	tasklet_kill(&cse_dev->done_task);
+ 	dma_free_coherent(cse_dev->device, sizeof(cse_desc_t),
+@@ -493,6 +525,8 @@ static int __exit cse_remove(struct platform_device *pdev)
+ 	cse_unregister_crypto_api();
+ 
+ 	cdev_del(&cse_dev->cdev);
++	device_destroy(cse_class, MKDEV(CSE3_MAJOR, CSE3_MINOR));
++	class_destroy(cse_class);
+ 	unregister_chrdev_region(MKDEV(CSE3_MAJOR, CSE3_MINOR), NUM_MINORS);
+ 
+ 	cse_destroy_queue(&cse_dev->queue);
+diff --git a/drivers/crypto/cse/cse3_hw.c b/drivers/crypto/cse/cse3_hw.c
+index 4d9a5f1..295abed 100644
+--- a/drivers/crypto/cse/cse3_hw.c
++++ b/drivers/crypto/cse/cse3_hw.c
+@@ -3,6 +3,7 @@
+  * CSE3 Hardware API
+  *
+  * Copyright (c) 2015-2016 Freescale Semiconductor, Inc.
++ * Copyright 2020 NXP
+  *
+  * This program is free software; you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License version 2 or
+@@ -126,6 +127,61 @@ static void cse_cmd_load_key(struct cse_device_data *cse_dev)
+ 	writel(CSE_CMD_LOAD_KEY, &cse_dev->base->cse_cmd);
+ }
+ 
++static void cse_cmd_load_sec_ram(struct cse_device_data *cse_dev, int key_id)
++{
++
++	writel(key_id, &cse_dev->base->cse_param[0]);
++	//cipher text address
++	writel(cse_dev->buffer_in_phys,
++		&cse_dev->base->cse_param[1]);
++	//iv address
++	writel(cse_dev->hw_desc_phys + offsetof(cse_desc_t, aes_iv),
++		&cse_dev->base->cse_param[2]);
++	//cmac address
++	writel(cse_dev->hw_desc_phys + offsetof(cse_desc_t, mac),
++		&cse_dev->base->cse_param[3]);
++	//command
++	writel(CSE_CMD_LOAD_SEC_RAM, &cse_dev->base->cse_cmd);
++
++}
++
++static void cse_cmd_open_sec_ram(struct cse_device_data *cse_dev)
++{
++	writel(readl(&cse_dev->base->cse_sra0), &cse_dev->base->cse_param[0]);
++	writel(CSE_CMD_OPEN_SEC_RAM, &cse_dev->base->cse_cmd);
++}
++
++static void cse_cmd_export_ram_iak(struct cse_device_data *cse_dev)
++{
++	writel(cse_dev->hw_desc_phys + offsetof(cse_desc_t, m1),
++			&cse_dev->base->cse_param[0]);
++	writel(cse_dev->hw_desc_phys + offsetof(cse_desc_t, m2),
++			&cse_dev->base->cse_param[1]);
++	writel(cse_dev->hw_desc_phys + offsetof(cse_desc_t, m3),
++			&cse_dev->base->cse_param[2]);
++	writel(cse_dev->hw_desc_phys + offsetof(cse_desc_t, m4),
++			&cse_dev->base->cse_param[3]);
++	writel(cse_dev->hw_desc_phys + offsetof(cse_desc_t, m5),
++			&cse_dev->base->cse_param[4]);
++	writel(CSE_CMD_EXPORT_RAM_IAK, &cse_dev->base->cse_cmd);
++}
++
++static void cse_cmd_load_plkey_iak(struct cse_device_data *cse_dev, int key_id)
++{
++	writel(key_id, &cse_dev->base->cse_param[0]);
++	writel(cse_dev->hw_desc_phys + offsetof(cse_desc_t, aes_key),
++			&cse_dev->base->cse_param[1]);
++	//key_flag1 and  secure counter
++	writel((cse_dev->hw_desc->secure_counter << CSE_SECURE_CNT_SHIFT)
++		| (cse_dev->hw_desc->p3_key_flags & CSE_P3_FLAGS_MASK),
++			&cse_dev->base->cse_param[2]);
++	//key flag2
++	writel(cse_dev->hw_desc->p4_key_flags & CSE_P4_FLAGS_MASK,
++			&cse_dev->base->cse_param[3]);
++	writel(readl(&cse_dev->base->cse_sra0), &cse_dev->base->cse_param[4]);
++	writel(CSE_CMD_LOAD_PLAIN_KEY_IAK, &cse_dev->base->cse_cmd);
++}
++
+ /**
+  * Generic CSE hardware request
+  * Does some common verifications/initialization
+@@ -181,6 +237,18 @@ int cse_hw_comm(struct cse_device_data *dev, uint32_t flags, int phase)
+ 	case FLAG_LOAD_KEY:
+ 		cse_cmd_load_key(dev);
+ 		break;
++	case FLAG_LOAD_SEC_RAM:
++		cse_cmd_load_sec_ram(dev, key_id);
++		break;
++	case FLAG_LOAD_PLKEY_IAK:
++		cse_cmd_load_plkey_iak(dev, key_id);
++		break;
++	case FLAG_EXPORT_RAM_IAK:
++		cse_cmd_export_ram_iak(dev);
++		break;
++	case FLAG_OPEN_SEC_RAM:
++		cse_cmd_open_sec_ram(dev);
++		break;
+ 	default:
+ 		res = -EINVAL;
+ 		break;
+diff --git a/drivers/crypto/cse/cse3_hw.h b/drivers/crypto/cse/cse3_hw.h
+index 611aaf0..142a511 100644
+--- a/drivers/crypto/cse/cse3_hw.h
++++ b/drivers/crypto/cse/cse3_hw.h
+@@ -3,6 +3,7 @@
+  * CSE3 Hardware API
+  *
+  * Copyright (c) 2015 Freescale Semiconductor, Inc.
++ * Copyright 2020 NXP
+  *
+  * This program is free software; you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License version 2 or
+@@ -18,6 +19,9 @@
+ #define _CSE_HW_H
+ 
+ #define IS_LOAD_KEY_PHASE(phase)	(phase == 1)
++#define CSE_SECURE_CNT_SHIFT      4U
++#define CSE_P3_FLAGS_MASK         0xFU
++#define CSE_P4_FLAGS_MASK         0xE0000000U
+ 
+ int cse_hw_comm(struct cse_device_data *dev, uint32_t flags, int phase);
+ 
+diff --git a/drivers/crypto/cse/cse3_req.c b/drivers/crypto/cse/cse3_req.c
+index ff19177..c8c4e0b 100644
+--- a/drivers/crypto/cse/cse3_req.c
++++ b/drivers/crypto/cse/cse3_req.c
+@@ -2,6 +2,8 @@
+  * Freescale Cryptographic Services Engine (CSE3) Device Driver
+  *
+  * Copyright (c) 2015-2016 Freescale Semiconductor, Inc.
++ * Copyright 2020 NXP
++ *
+  * CSE3 Ioctl/User space Interface
+  *
+  * This program is free software; you can redistribute it and/or modify
+@@ -62,6 +64,40 @@ struct cse_ldkey_request {
+ 	uint8_t		m3[M3_KEY_SIZE];
+ };
+ 
++/**
++ * Load sec ram request
++ */
++struct cse_ldsecram_request {
++	cse_req_t	base;
++	uint8_t		*ciphertext;
++	uint8_t		iv[AES_KEY_SIZE];
++	uint8_t		cmac[AES_KEY_SIZE];
++};
++
++/**
++ * Load plain key IAK request  (only for CSE FW >=3.07)
++ */
++struct cse_ldkeyiak_request {
++	cse_req_t	base;
++	uint32_t	secure_counter;
++	uint8_t		p3_key_flags;
++	uint32_t	p4_key_flags;
++};
++
++/**
++ * Export Ram Key IAK request   (only for CSE FW >=3.07)
++ */
++struct cse_exramkeyiak_request {
++	cse_req_t	base;
++	uint8_t		m1[M1_KEY_SIZE];
++	uint8_t		m2[M2_KEY_SIZE];
++	uint8_t		m3[M3_KEY_SIZE];
++	uint8_t		m4[M4_KEY_SIZE];
++	uint8_t		m5[M5_KEY_SIZE];
++};
++
++
++
+ static int cse_ioctl_copy_output
+ (struct cse_device_data *dev, struct cse_request *req)
+ {
+@@ -69,6 +105,7 @@ struct cse_ldkey_request {
+ 	struct cse_cmac_request *cmac_req;
+ 	struct cse_mp_request *mp_req;
+ 	struct cse_rval_request *rval_req;
++	struct cse_exramkeyiak_request *exramkeyiak_req;
+ 	cse_desc_t *desc = dev->hw_desc;
+ 
+ 	if (dev->req->flags & (FLAG_ENC|FLAG_DEC)) {
+@@ -92,6 +129,16 @@ struct cse_ldkey_request {
+ 	} else if (dev->req->flags & FLAG_RND) {
+ 		rval_req = (struct cse_rval_request *)dev->req;
+ 		memcpy(rval_req->rval, desc->rval, RND_VAL_SIZE);
++
++	} else if (dev->req->flags & FLAG_EXPORT_RAM_IAK) {
++		exramkeyiak_req = (struct cse_exramkeyiak_request *)dev->req;
++		dma_sync_single_for_cpu(dev->device, dev->hw_desc_phys,
++				sizeof(cse_desc_t), DMA_FROM_DEVICE);
++		memcpy(exramkeyiak_req->m1, desc->m1, M1_KEY_SIZE);
++		memcpy(exramkeyiak_req->m2, desc->m2, M2_KEY_SIZE);
++		memcpy(exramkeyiak_req->m3, desc->m3, M3_KEY_SIZE);
++		memcpy(exramkeyiak_req->m4, desc->m4, M4_KEY_SIZE);
++		memcpy(exramkeyiak_req->m5, desc->m5, M5_KEY_SIZE);
+ 	}
+ 
+ 	return 0;
+@@ -104,6 +151,8 @@ struct cse_ldkey_request {
+ 	struct cse_cmac_request *cmac_req;
+ 	struct cse_mp_request *mp_req;
+ 	struct cse_ldkey_request *key_req;
++	struct cse_ldsecram_request *secram_req;
++	struct cse_ldkeyiak_request *ldkeyiak_req;
+ 	cse_desc_t *desc = dev->hw_desc;
+ 
+ 	if (req->flags & FLAG_LOAD_KEY) {
+@@ -166,6 +215,27 @@ struct cse_ldkey_request {
+ 				mp_req->len_in, DMA_TO_DEVICE);
+ 	} else if (req->flags & FLAG_LOAD_PLKEY) {
+ 		memcpy(desc->aes_key, req->ctx->aes_key, AES_KEY_SIZE);
++	} else if (req->flags & FLAG_LOAD_SEC_RAM) {
++		secram_req = (struct cse_ldsecram_request *) req;
++		if (cse_allocate_buffer(dev->device, &dev->buffer_in,
++				&dev->buffer_in_phys,
++				FULL_KRAM_SIZE, DMA_TO_DEVICE))
++			return -ENOMEM;
++
++		memcpy(dev->buffer_in, secram_req->ciphertext, FULL_KRAM_SIZE);
++		desc->nbits = desc_len(FULL_KRAM_SIZE);
++
++		memcpy(desc->aes_iv, secram_req->iv, AES_KEY_SIZE);
++		memcpy(desc->mac, secram_req->cmac, AES_MAC_SIZE);
++
++		dma_sync_single_for_device(dev->device, dev->buffer_in_phys,
++		FULL_KRAM_SIZE, DMA_TO_DEVICE);
++	} else if (dev->req->flags & FLAG_LOAD_PLKEY_IAK) {
++		ldkeyiak_req = (struct cse_ldkeyiak_request *) req;
++		desc->secure_counter = ldkeyiak_req->secure_counter;
++		desc->p3_key_flags = ldkeyiak_req->p3_key_flags;
++		desc->p4_key_flags = ldkeyiak_req->p4_key_flags;
++		memcpy(desc->aes_key, req->ctx->aes_key, AES_KEY_SIZE);
+ 	}
+ 
+ 	return 0;
+@@ -186,6 +256,8 @@ static void cse_ioctl_free_extra(struct cse_request *req)
+ 		kfree(((struct cse_mp_request *)req)->buffer_in);
+ 	} else if (req->flags & (FLAG_GEN_MAC|FLAG_VER_MAC)) {
+ 		kfree(((struct cse_cmac_request *)req)->buffer_in);
++	} else if (req->flags & FLAG_LOAD_SEC_RAM) {
++		kfree(((struct cse_ldsecram_request *)req)->ciphertext);
+ 	}
+ }
+ 
+@@ -301,6 +373,189 @@ int cse_ioctl_load_key(cse_ctx_t *ctx, unsigned int cmd, unsigned long arg)
+ 
+ 	cse_ioctl_init_ops(&new_req->base);
+ 	init_completion(&new_req->base.complete);
++
++	ret = cse_handle_request(ctx->dev, (cse_req_t *)new_req);
++
++	if (!ret) {
++		if (wait_for_completion_interruptible(
++					&new_req->base.complete)) {
++			cse_cancel_request((cse_req_t *)new_req);
++			return -EINTR;
++		} else if (new_req->base.error) {
++			ret = new_req->base.error;
++		}
++	}
++
++	cse_finish_req(ctx->dev, (cse_req_t *)new_req);
++	return ret;
++}
++
++int cse_ioctl_load_sec_ram(cse_ctx_t *ctx, unsigned int cmd, unsigned long arg)
++{
++	struct cse_ldsecram_request *new_req;
++	struct ioctl_ldsecram ldsecram;
++	int ret = 0, remains1, remains2, remains3;
++
++	if (copy_from_user(&ldsecram, (struct ioctl_ldsecram __user *)arg,
++				sizeof(struct ioctl_ldsecram)))
++		return -EFAULT;
++
++	new_req = kzalloc(sizeof(*new_req), GFP_KERNEL);
++	if (!new_req)
++		return -ENOMEM;
++
++	new_req->ciphertext = kzalloc(FULL_KRAM_SIZE, GFP_KERNEL);
++	if (!new_req->ciphertext) {
++		kfree(new_req);
++		return -ENOMEM;
++	}
++	new_req->base.ctx = ctx;
++	new_req->base.phase = 0;
++	new_req->base.flags = FLAG_LOAD_SEC_RAM;
++	if (ldsecram.kbs_key)
++		new_req->base.flags |= FLAG_KBS;
++
++	new_req->base.key_id = ldsecram.key_id;
++	new_req->base.flags |= FLAG_WITH_KEY;
++
++	/* Copy input text ciphertext,iv, cmac and send command to the device */
++	remains1 = copy_from_user(new_req->ciphertext,
++			(uint8_t __user *)ldsecram.ciphertext_addr,
++			FULL_KRAM_SIZE);
++	remains2 = copy_from_user(new_req->iv,
++			(uint8_t __user *)ldsecram.iv_addr,
++			AES_KEY_SIZE);
++	remains3 = copy_from_user(new_req->cmac,
++			(uint8_t __user *)ldsecram.cmac_addr,
++			AES_MAC_SIZE);
++	if (remains1 || remains2 || remains3) {
++		kfree(new_req->ciphertext);
++		kfree(new_req);
++		return -EFAULT;
++	}
++
++	cse_ioctl_init_ops(&new_req->base);
++	init_completion(&new_req->base.complete);
++
++	ret = cse_handle_request(ctx->dev, (cse_req_t *)new_req);
++
++	if (!ret) {
++		if (wait_for_completion_interruptible(
++					&new_req->base.complete)) {
++			cse_cancel_request((cse_req_t *)new_req);
++			return -EINTR;
++		} else if (new_req->base.error) {
++			ret = new_req->base.error;
++		}
++	}
++
++	cse_finish_req(ctx->dev, (cse_req_t *)new_req);
++	return ret;
++}
++
++int cse_ioctl_open_sec_ram(cse_ctx_t *ctx, unsigned int cmd, unsigned long arg)
++{
++	cse_req_t *new_req;
++	int ret = 0;
++
++	new_req = kzalloc(sizeof(*new_req), GFP_KERNEL);
++	if (!new_req)
++		return -ENOMEM;
++
++	new_req->ctx = ctx;
++	new_req->phase = 0;
++	new_req->flags = FLAG_OPEN_SEC_RAM;
++	cse_ioctl_init_ops(new_req);
++	init_completion(&new_req->complete);
++	ret = cse_handle_request(ctx->dev, new_req);
++
++	if (!ret) {
++		if (wait_for_completion_interruptible(
++					&new_req->complete)) {
++			cse_cancel_request(new_req);
++			return -EINTR;
++		} else if (new_req->error) {
++			ret = new_req->error;
++		}
++	}
++
++	cse_finish_req(ctx->dev, new_req);
++	return ret;
++}
++
++
++int cse_ioctl_load_plkey_iak(cse_ctx_t *ctx,
++			unsigned int cmd, unsigned long arg)
++{
++	struct cse_ldkeyiak_request *new_req;
++	struct ioctl_ldkeyiak ldkeyiak;
++	int ret = 0;
++
++	if (copy_from_user(&ldkeyiak, (struct ioctl_ldkeyiak __user *)arg,
++				sizeof(struct ioctl_ldkeyiak)))
++		return -EFAULT;
++
++	new_req = kzalloc(sizeof(*new_req), GFP_KERNEL);
++	if (!new_req)
++		return -ENOMEM;
++
++	new_req->base.ctx = ctx;
++	new_req->base.phase = 0;
++	new_req->base.flags = FLAG_LOAD_PLKEY_IAK;
++	if (ldkeyiak.kbs_key)
++		new_req->base.flags |= FLAG_KBS;
++
++	new_req->base.key_id = ldkeyiak.key_id;
++	new_req->base.flags |= FLAG_WITH_KEY;
++	new_req->secure_counter = ldkeyiak.secure_counter;
++	new_req->p3_key_flags = ldkeyiak.p3_key_flags;
++	new_req->p4_key_flags = ldkeyiak.p4_key_flags;
++
++	/* Copy aes key  and send command to the device */
++	memcpy(new_req->base.ctx->aes_key, ldkeyiak.plainkey, AES_KEY_SIZE);
++
++	cse_ioctl_init_ops(&new_req->base);
++	init_completion(&new_req->base.complete);
++
++	ret = cse_handle_request(ctx->dev, (cse_req_t *)new_req);
++
++	if (!ret) {
++		if (wait_for_completion_interruptible(
++					&new_req->base.complete)) {
++			cse_cancel_request((cse_req_t *)new_req);
++			return -EINTR;
++		} else if (new_req->base.error) {
++			ret = new_req->base.error;
++		}
++	}
++
++	cse_finish_req(ctx->dev, (cse_req_t *)new_req);
++	return ret;
++}
++
++int cse_ioctl_export_ram_iak(cse_ctx_t *ctx,
++		unsigned int cmd, unsigned long arg)
++{
++	struct cse_exramkeyiak_request *new_req;
++	struct ioctl_exramkeyiak ldexramkeyiak;
++	int ret = 0;
++
++	if (copy_from_user(&ldexramkeyiak,
++				(struct ioctl_exramkeyiak __user *)arg,
++				sizeof(struct ioctl_exramkeyiak)))
++		return -EFAULT;
++
++	new_req = kzalloc(sizeof(*new_req), GFP_KERNEL);
++	if (!new_req)
++		return -ENOMEM;
++
++	new_req->base.ctx = ctx;
++	new_req->base.phase = 0;
++	new_req->base.flags = FLAG_EXPORT_RAM_IAK;
++
++	cse_ioctl_init_ops(&new_req->base);
++	init_completion(&new_req->base.complete);
++
+ 	ret = cse_handle_request(ctx->dev, (cse_req_t *)new_req);
+ 
+ 	if (!ret) {
+@@ -310,6 +565,33 @@ int cse_ioctl_load_key(cse_ctx_t *ctx, unsigned int cmd, unsigned long arg)
+ 			return -EINTR;
+ 		} else if (new_req->base.error) {
+ 			ret = new_req->base.error;
++		} else if (new_req->base.flags & FLAG_EXPORT_RAM_IAK) {
++			/*Copy data to userspace*/
++			if (copy_to_user((uint8_t __user *)ldexramkeyiak.addr_m1
++						, new_req->m1,
++						M1_KEY_SIZE)) {
++				ret = -EFAULT;
++			}
++			if (copy_to_user((uint8_t __user *)ldexramkeyiak.addr_m2
++						, new_req->m2,
++						M2_KEY_SIZE)) {
++				ret = -EFAULT;
++			}
++			if (copy_to_user((uint8_t __user *)ldexramkeyiak.addr_m3
++						, new_req->m3,
++						M3_KEY_SIZE)) {
++				ret = -EFAULT;
++			}
++			if (copy_to_user((uint8_t __user *)ldexramkeyiak.addr_m4
++						, new_req->m4,
++						M4_KEY_SIZE)) {
++				ret = -EFAULT;
++			}
++			if (copy_to_user((uint8_t __user *)ldexramkeyiak.addr_m5
++						, new_req->m5,
++						M5_KEY_SIZE)) {
++				ret = -EFAULT;
++			}
+ 		}
+ 	}
+ 
+@@ -490,6 +772,7 @@ int cse_ioctl_crypt(cse_ctx_t *ctx, unsigned int cmd,
+ 		dev_err(cse_dev_ptr->device, "failed to alloc mem for crypto request.\n");
+ 		return -ENOMEM;
+ 	}
++
+ 	new_req->buffer_in = kzalloc(crypt.len, GFP_KERNEL);
+ 	new_req->buffer_out = kzalloc(crypt.len, GFP_KERNEL);
+ 	if (!new_req->buffer_in || !new_req->buffer_out) {
+diff --git a/drivers/crypto/cse/cse3_req.h b/drivers/crypto/cse/cse3_req.h
+index 7223dc1..834a442 100644
+--- a/drivers/crypto/cse/cse3_req.h
++++ b/drivers/crypto/cse/cse3_req.h
+@@ -3,6 +3,7 @@
+  * CSE3 Requests Interface
+  *
+  * Copyright (c) 2015-2016 Freescale Semiconductor, Inc.
++ * Copyright 2020 NXP
+  *
+  * This program is free software; you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License version 2 or
+@@ -35,6 +36,12 @@ int cse_ioctl_cmac(cse_ctx_t *ctx, unsigned int cmd, unsigned long arg,
+ 		bool has_key, bool verif);
+ int cse_ioctl_crypt(cse_ctx_t *ctx, unsigned int cmd,
+ 		unsigned long arg, bool has_key);
++int cse_ioctl_load_sec_ram(cse_ctx_t *ctx, unsigned int cmd, unsigned long arg);
++int cse_ioctl_load_plkey_iak(cse_ctx_t *ctx, unsigned int cmd,
++		unsigned long arg);
++int cse_ioctl_export_ram_iak(cse_ctx_t *ctx, unsigned int cmd,
++		unsigned long arg);
++int cse_ioctl_open_sec_ram(cse_ctx_t *ctx, unsigned int cmd, unsigned long arg);
+ 
+ void cse_init_queue(struct cse_queue *queue, unsigned int max_len);
+ int cse_enqueue_request(struct cse_queue *queue, cse_req_t *req);
+diff --git a/include/linux/fsl/cse3_ioctl.h b/include/linux/fsl/cse3_ioctl.h
+index 8197e12..8ee66f9 100644
+--- a/include/linux/fsl/cse3_ioctl.h
++++ b/include/linux/fsl/cse3_ioctl.h
+@@ -3,6 +3,7 @@
+  * CSE3 Ioctl User space Interface
+  *
+  * Copyright (c) 2015 Freescale Semiconductor, Inc.
++ * Copyright 2020 NXP
+  *
+  * This program is free software; you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License version 2 or
+@@ -72,6 +73,41 @@ struct ioctl_ldkey {
+ 	void		*addr_m3;
+ };
+ 
++/**
++ * Load Sec ram request
++ */
++struct ioctl_ldsecram {
++	uint32_t        len;
++	int             key_id;
++	int             kbs_key;
++	void            *ciphertext_addr;
++	void            *iv_addr;
++	void            *cmac_addr;
++};
++
++/**
++ * export Sec ram IAK request (only for CSE FW >=3.07)
++ */
++struct ioctl_exramkeyiak {
++	void            *addr_m1;
++	void            *addr_m2;
++	void            *addr_m3;
++	void            *addr_m4;
++	void            *addr_m5;
++};
++
++/**
++ * Load plain key IAK request (only for CSE FW >=3.07)
++ */
++struct ioctl_ldkeyiak {
++	int             kbs_key;
++	int             key_id;
++	uint8_t         plainkey[AES_KEY_SIZE];
++	uint32_t        secure_counter;
++	uint8_t         p3_key_flags;
++	uint32_t        p4_key_flags;
++};
++
+ #define CSE_CMD_TYPE	0xc3
+ 
+ #define CSE3_IOCTL_COMPRESS_MP  _IOWR(CSE_CMD_TYPE, 1,  struct ioctl_mp)
+@@ -91,5 +127,10 @@ struct ioctl_ldkey {
+ 
+ #define CSE3_IOCTL_SET_KEY      _IOC(_IOC_WRITE, CSE_CMD_TYPE, 15, AES_KEY_SIZE)
+ #define CSE3_IOCTL_SET_IV       _IOC(_IOC_WRITE, CSE_CMD_TYPE, 16, AES_KEY_SIZE)
++#define CSE3_IOCTL_LOAD_SEC_RAM _IOWR(CSE_CMD_TYPE, 17, struct ioctl_ldsecram)
++#define CSE3_IOCTL_LOAD_PLKEY_IAK _IOW(CSE_CMD_TYPE, 18, struct ioctl_ldkeyiak)
++#define CSE3_IOCTL_EXPORT_RAM_IAK \
++		_IOWR(CSE_CMD_TYPE, 19, struct ioctl_exramkeyiak)
++#define CSE3_IOCTL_OPEN_SECRAM  _IO(CSE_CMD_TYPE, 20)
+ 
+ #endif /* _CSE_IOCTL_H */
+-- 
+1.9.1
+
