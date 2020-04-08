@@ -1,0 +1,28 @@
+From 9088be18ad735183b7d9340dcedfbe4ab61fec5c Wed Dec 4 18:45:41 2019 +0100
+From: Zdenek Valek <zdenek.valek@nxp.com>
+Date: Wed, 4 Mar 2020 12:59:00 +0100
+Subject: [PATCH] decrease h264 decoder clock
+
+Signed-off-by: Zdenek Valek <zdenek.valek@nxp.com>
+----
+
+diff --git a/arch/arm/include/asm/arch-s32/s32v234/mc_cgm_regs.h b/arch/arm/include/asm/arch-s32/s32v234/mc_cgm_regs.h
+index aa7d266a5f..e622953e52 100644
+--- a/arch/arm/include/asm/arch-s32/s32v234/mc_cgm_regs.h
++++ b/arch/arm/include/asm/arch-s32/s32v234/mc_cgm_regs.h
+@@ -272,10 +272,10 @@
+ 
+ #define ENET_PLL_PHI0_FREQ		(500000000)
+ #define ENET_PLL_PHI1_FREQ		(1000000000)
+-/* ENET_PLL_PHI1_DFS1_FREQ - 350 Mhz*/
++/* ENET_PLL_PHI1_DFS1_FREQ - 120 Mhz*/
+ #define ENET_PLL_PHI1_DFS1_EN		(1)
+-#define ENET_PLL_PHI1_DFS1_MFI		(2)
+-#define ENET_PLL_PHI1_DFS1_MFN		(220)
++#define ENET_PLL_PHI1_DFS1_MFI		(8)
++#define ENET_PLL_PHI1_DFS1_MFN		(85)
+ /* ENET_PLL_PHI1_DFS2_FREQ - 350 Mhz*/
+ #define ENET_PLL_PHI1_DFS2_EN		(1)
+ #define ENET_PLL_PHI1_DFS2_MFI		(2)
+-- 
+2.11.0
