@@ -18,7 +18,7 @@ index e414aac8c4..d06bffecc5 100644
  	  file for further details.
  
 +config ARMV8_CUSTOM_SMVEC_EN
-+	depends on TARGET_S32V234CCPB || TARGET_S32V234EVB || TARGET_S32V234FVB || TARGET_S32V234PCIE || TARGET_S32V234TMDP
++	depends on TARGET_S32V234CCPB || TARGET_S32V234EVB || TARGET_S32V234FVB || TARGET_S32V234PCIE || TARGET_S32V234TMDP || TARGET_MPXS32V234
 +	bool "Support custom secure monitor vector on ARMv8"
 +	default y
 +	help
