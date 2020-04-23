@@ -1,0 +1,115 @@
+From 9088be18ad735183b7d9340dcedfbe4ab61fec5c Wed Dec 4 18:45:41 2019 +0100
+From: Zdenek Valek <zdenek.valek@nxp.com>
+Date: Wed, 4 Mar 2020 12:59:00 +0100
+Subject: [PATCH] secure monitor: enable Secure Monitor support
+
+Signed-off-by: Daniel Lazar <daniel.lazar@nxp.com>
+Signed-off-by: Ludovit Minarik <ludovit.minarik@nxp.com>
+Signed-off-by: Catalin Udma <catalin-dan.udma@nxp.com>
+Signed-off-by: Zdenek Valek <zdenek.valek@nxp.com>
+----
+
+diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
+index e414aac8c4..d06bffecc5 100644
+--- a/arch/arm/Kconfig
++++ b/arch/arm/Kconfig
+@@ -1319,6 +1319,19 @@ config TI_SECURE_DEVICE
+ 	  authenticated) and the code. See the doc/README.ti-secure
+ 	  file for further details.
+ 
++config ARMV8_CUSTOM_SMVEC_EN
++	depends on TARGET_S32V234CCPB || TARGET_S32V234EVB || TARGET_S32V234FVB || TARGET_S32V234PCIE || TARGET_S32V234TMDP || TARGET_MPXS32V234
++	bool "Support custom secure monitor vector on ARMv8"
++	default y
++	help
++	  Support of the secure monitor. The secure monitor can be entered from the Linux kernel
++	  if this is enabled. The access is otherwise locked and causes an exception.
++
++config ARMV8_CUSTOM_SMVEC
++	depends on ARMV8_CUSTOM_SMVEC_EN
++	hex "Custom vector address"
++	default 0xC4f00000
++
+ source "arch/arm/mach-aspeed/Kconfig"
+ 
+ source "arch/arm/mach-at91/Kconfig"
+diff --git a/arch/arm/cpu/armv8/exceptions.S b/arch/arm/cpu/armv8/exceptions.S
+index 1a78a5d1dc..1927362d26 100644
+--- a/arch/arm/cpu/armv8/exceptions.S
++++ b/arch/arm/cpu/armv8/exceptions.S
+@@ -126,3 +126,14 @@ exception_exit:
+ 	ldp	x27, x28, [sp],#16
+ 	ldp	x29, x30, [sp],#16
+ 	eret
++
++#ifdef CONFIG_ARMV8_CUSTOM_SMVEC
++ENTRY(install_sm_vectors)
++    stp x0, x1, [sp, #-16]!
++    ldr x0, =CONFIG_ARMV8_CUSTOM_SMVEC
++    msr vbar_el3, x0
++    ldp x0, x1, [sp], #16
++    ret
++ENDPROC(install_sm_vectors)
++#endif
++
+diff --git a/arch/arm/include/asm/macro.h b/arch/arm/include/asm/macro.h
+index d5a7a8bb61..a5bbcef3f8 100644
+--- a/arch/arm/include/asm/macro.h
++++ b/arch/arm/include/asm/macro.h
+@@ -173,7 +173,11 @@ lr	.req	x30
+ 
+ 	mov	\tmp, sp
+ 	msr	sp_el2, \tmp		/* Migrate SP */
++#ifdef CONFIG_ARMV8_CUSTOM_SMVEC
++	ldr	\tmp, =vectors
++#else
+ 	mrs	\tmp, vbar_el3
++#endif
+ 	msr	vbar_el2, \tmp		/* Migrate VBAR */
+ 
+ 	/* Check switch to AArch64 EL2 or AArch32 Hypervisor mode */
+@@ -185,7 +189,7 @@ lr	.req	x30
+ 	 * RES1 (Bits[5:4]) | Non-secure EL0/EL1.
+ 	 * and the SMD depends on requirements.
+ 	 */
+-#ifdef CONFIG_ARMV8_PSCI
++#if defined(CONFIG_ARMV8_PSCI) || defined(CONFIG_ARMV8_CUSTOM_SMVEC)
+ 	ldr	\tmp, =(SCR_EL3_RW_AARCH64 | SCR_EL3_HCE_EN |\
+ 			SCR_EL3_RES1 | SCR_EL3_NS_EN)
+ #else
+diff --git a/arch/arm/include/asm/system.h b/arch/arm/include/asm/system.h
+index 9ae4ae93f5..613f3b8d01 100644
+--- a/arch/arm/include/asm/system.h
++++ b/arch/arm/include/asm/system.h
+@@ -246,6 +246,9 @@ void smp_kick_all_cpus(void);
+ 
+ void flush_l3_cache(void);
+ void mmu_change_region_attr(phys_addr_t start, size_t size, u64 attrs);
++#ifdef CONFIG_ARMV8_CUSTOM_SMVEC
++void install_sm_vectors(void);
++#endif
+ 
+ /*
+  *Issue a secure monitor call in accordance with ARM "SMC Calling convention",
+diff --git a/arch/arm/lib/bootm.c b/arch/arm/lib/bootm.c
+index c3c1d2fdfa..7f825b1415 100644
+--- a/arch/arm/lib/bootm.c
++++ b/arch/arm/lib/bootm.c
+@@ -334,9 +334,15 @@ static void boot_jump_linux(bootm_headers_t *images, int flag)
+ 	announce_and_cleanup(fake);
+ 
+ 	if (!fake) {
++#if defined(CONFIG_ARMV8_PSCI) && defined(CONFIG_ARMV8_CUSTOM_SMVEC)
++	#error "Cannot enable CONFIG_ARMV8_PSCI and CONFIG_ARMV8_CUSTOM_SMVEC"
++#endif
+ #ifdef CONFIG_ARMV8_PSCI
+ 		armv8_setup_psci();
+ #endif
++#ifdef CONFIG_ARMV8_CUSTOM_SMVEC
++		install_sm_vectors();
++#endif
+ 		do_nonsec_virt_switch();
+ 
+ 		update_os_arch_secondary_cores(images->os.arch);
+--
+2.11.0
