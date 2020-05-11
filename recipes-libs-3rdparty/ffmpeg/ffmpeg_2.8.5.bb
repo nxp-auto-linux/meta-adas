@@ -70,6 +70,9 @@ EXTRA_OECONF = " \
     --datadir=${datadir}/ffmpeg \
 "
 
+do_configure[lockfiles] += "${TMPDIR}/vsdk-scripts.lock"
+do_compile[lockfiles] += "${TMPDIR}/vsdk-scripts.lock"
+
 do_configure() {
     ${S}/configure ${EXTRA_OECONF}
 }

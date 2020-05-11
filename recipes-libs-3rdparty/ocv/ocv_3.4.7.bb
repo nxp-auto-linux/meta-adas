@@ -56,6 +56,8 @@ EXTRA_OECMAKE = "\
   -DBUILD_ZLIB=ON \
 "
 
+do_configure[lockfiles] += "${TMPDIR}/vsdk-scripts.lock"
+do_compile[lockfiles] += "${TMPDIR}/vsdk-scripts.lock"
 
 do_install_append() {
   cp -rf ${D}/${OUTPUT_DIR_NAME}/* ${THRDPARTY_LIBS_DIR}/ocv/linux-arm64/

@@ -25,6 +25,9 @@ EXTRA_OEMAKE += "CROSS_COMPILE="${TARGET_PREFIX}""
 INHIBIT_PACKAGE_STRIP = "1"
 INSTALL_DIR = "${D}${VSDK_OUTPUT_DIR_NAME}"
 
+do_configure[lockfiles] += "${TMPDIR}/vsdk-scripts.lock"
+do_compile[lockfiles] += "${TMPDIR}/vsdk-scripts.lock"
+
 # Insert VSDK modules in a specific order as handled by vsdk-mod-order module
 RDEPENDS_${PN} += "vsdk-mod-order"
 
