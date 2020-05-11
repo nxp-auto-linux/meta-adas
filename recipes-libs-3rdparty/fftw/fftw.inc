@@ -15,6 +15,9 @@ inherit autotools pkgconfig
 
 EXTRA_OECONF = "--disable-fortran --enable-shared --enable-threads"
 
+do_configure[lockfiles] += "${TMPDIR}/vsdk-scripts.lock"
+do_compile[lockfiles] += "${TMPDIR}/vsdk-scripts.lock"
+
 do_configure_prepend() {
     echo 'AM_PROG_AS' >> ${S}/configure.ac 
 }

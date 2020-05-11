@@ -73,13 +73,14 @@ python check_host_gcc() {
 }
 
 do_configure[prefuncs] += "check_host_gcc"
+do_configure[lockfiles] += "${TMPDIR}/vsdk-scripts.lock"
 
 do_install() {
 	mkdir -p "${INSTALL_DIR}"
 	cp ${EXTERNALSRC_BUILD}/*.elf "${INSTALL_DIR}/"
 }
 
-do_compile[lockfiles] = "${TMPDIR}/demos-scripts.lock"
+do_compile[lockfiles] += "${TMPDIR}/vsdk-scripts.lock"
 
 do_compile () {
 	make -C ${EXTERNALSRC_BUILD} ${EXTRA_OEMAKE} allsub
