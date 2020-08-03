@@ -30,9 +30,6 @@ RDEPENDS_packagegroup-vsdk-demos = "\
 	lane-departure-warning \
 	pedestrian-detection-aggcf \
 	pedestrian-detection \
-	avb-isp-h264-1stream \
-	avb-isp-h264-4stream \
-	avb-isp-jpeg-4stream \
 	isp-h264dec-single-stream \
 	isp-jpeg-4stream \
 	isp-mem-simple \

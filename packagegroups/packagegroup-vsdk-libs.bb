@@ -16,5 +16,4 @@ RDEPENDS_packagegroup-vsdk-libs = "\
 	csi \
 	h264enc \
 	sequencer \
-	sm-drv \
 "
