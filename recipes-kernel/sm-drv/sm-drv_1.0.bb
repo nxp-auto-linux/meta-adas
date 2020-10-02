@@ -7,7 +7,7 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/GPL-2.0;md5=801f80980d171dd6425
 inherit module
 
 SRC_URI = "git://source.codeaurora.org/external/autobsps32/extra/sm_drv;branch=master;protocol=https"
-SRCREV = "ccccea7629752e884c3226de9f255e246eeb9de1"
+SRCREV = "8ce98accfed18a20a8bcd4d5f0b6d388ec1572a3"
 
 S = "${WORKDIR}/git/driver"
 
