@@ -38,8 +38,12 @@ RDEPENDS_packagegroup-vsdk-demos = "\
 	isp-mem-simple \
 	isp-ov10635-quad \
 	isp-ov10635-viu-s \
+	isp-ov10640-mipi-12bcomb \
 	isp-ov10640-mipi-s \
 	isp-ov10640-quad \
+	isp-sonyimx224-dol2 \
+	isp-sonyimx224-dual-unsync \
+	isp-sonyimx224-fdma-unsync \
 	isp-sonyimx224-generic-encryptedkernel \
 	isp-sonyimx224-graph-switch \
 	isp-sonyimx224-graph-switch-encryptedkernel \
@@ -53,3 +57,5 @@ RDEPENDS_packagegroup-vsdk-demos = "\
 	onlinetool-genertingm1tom5 \
 	demos-data \
 "
+
+RDEPENDS_packagegroup-vsdk-demos += " ${@bb.utils.contains('DISTRO_FEATURES', 'gpu', 'gpu-apex-data-flow', '', d)}"
